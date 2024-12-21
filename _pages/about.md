@@ -1,6 +1,6 @@
 ---
 permalink: /
-title: "Academic Pages is a ready-to-fork GitHub Pages template for academic personal websites"
+title: "About me"
 author_profile: true
 redirect_from: 
   - /about/
@@ -14,7 +14,7 @@ This is my personal homepage. I shall update with my thoughts here.
 Bio
 ====
 
-I'm currently an undergraduate student. Interest lines in:
+I'm currently an undergraduate student. Interest lies in:
 
 - Machine Learning
 - Statistics
@@ -24,4 +24,4 @@ Now addicted to CS2. (My **steam** account is on the sidebar!)
 Contact Me
 ====
 
-Though I believe nobody would like to do so, please contact via my e-mail on the sidebar.
+Though I believe nobody would like to do so, please contact via my **e-mail** on the sidebar.
