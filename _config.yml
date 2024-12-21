@@ -73,6 +73,7 @@ author:
   xing             : # Username
   youtube          : # Username
   zhihu            : # Username
+  bilibili         : https://space.bilibili.com/249422664 # URL
 
 # Publication Category - The following the list of publication categories and their headings
 publication_category:
@@ -119,7 +120,7 @@ staticman:
 atom_feed:
   hide                   : false     # change to true to hide the RSS feed in the footer
   path                   : # blank (default) uses feed.xml
-
+search                   : true
 
 # SEO Related
 google_site_verification :
@@ -218,9 +219,6 @@ collections:
   publications:
     output: true
     permalink: /:collection/:path/
-  portfolio:
-    output: true
-    permalink: /:collection/:path/
   talks:
     output: true
     permalink: /:collection/:path/
@@ -264,15 +262,6 @@ defaults:
       author_profile: true
       share: true
       comments: true
-  # _portfolio
-  - scope:
-      path: ""
-      type: portfolio
-    values:
-      layout: single
-      author_profile: true
-      share: true
-      comment: true
   # _talks
   - scope:
       path: ""
