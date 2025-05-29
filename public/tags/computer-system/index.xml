@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Computer System on 小鹤</title>
+    <link>http://localhost:54424/tags/computer-system/</link>
+    <description>Recent content in Computer System on 小鹤</description>
+    <generator>Hugo -- 0.147.6</generator>
+    <language>zh-cn</language>
+    <lastBuildDate>Thu, 29 May 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:54424/tags/computer-system/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>ICS-2-程序的机器级表示</title>
+      <link>http://localhost:54424/posts/2-machine-level-programming/</link>
+      <pubDate>Thu, 29 May 2025 00:00:00 +0000</pubDate>
+      <guid>http://localhost:54424/posts/2-machine-level-programming/</guid>
+      <description>ICS笔记的第二部分, 介绍了在更接近硬件的层面上, 程序是如何表示的</description>
+    </item>
+  </channel>
+</rss>

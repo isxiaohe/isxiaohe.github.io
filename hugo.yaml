@@ -1,0 +1,58 @@
+baseURL: https://example.org/
+languageCode: zh-cn
+title: 小鹤
+theme: PaperMod
+
+params:
+  profileMode:
+    enabled: true
+    title: "小鹤"
+    subtitle: "天坑本科在读, 对CV/Embodied Intelligence感兴趣..."
+    imageUrl: "images/profile.jpg"
+    imageTitle: "profile picture"
+    imageWidth: 120
+    imageHeight: 120
+    buttons:
+      - name: Publications
+        url: "/publications"
+      - name: Posts
+        url: "/posts"
+
+  socialIcons:
+    - name: Github
+      url: "https://github.com/isxiaohe"
+    - name: Email
+      url: "zhifei.yeung@gmail.com"
+
+  fuseOpts:
+    - isCaseSensitive: false
+    - shouldSort: true
+    - location: 0
+    - distance: 1000
+    - threshold: 0.4
+    - minMatchCharLength: 0
+    - keys: ["title", "permalink", "summary", "content"]
+
+  features:
+    - search
+
+menu:
+  main:
+    - identifier: tag
+      name: Tags
+      url: /tags/
+      weight: 3
+    - identifier: posts
+      name: Posts
+      url: /posts/
+      weight: 1
+    - identifier: publications
+      name: Publications
+      url: /publications/
+      weight: 2
+
+output:
+  home:
+    - HTML
+    - RSS
+    - JSON
