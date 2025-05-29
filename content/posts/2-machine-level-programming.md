@@ -16,7 +16,7 @@ C语言是一种高级语言, 其内容更接近自然语言, 而机器执行的
 
 汇编语言的操作对象也并非直接是机器的硬件, 而是对硬件的抽象. 具体而言, 我们认为汇编语言操作的是**CPU**和**Memory**.
 
-![](assets/ics-walkthrough/assembly-view.png)
+![](../assets/ics-walkthrough/assembly-view.png)
 
 汇编语言可见(可操作)的部分包括
 - CPU
@@ -27,7 +27,7 @@ C语言是一种高级语言, 其内容更接近自然语言, 而机器执行的
 
 x86-64包括16个整数寄存器, 更具体的, 一共有8个有名字的寄存器和8个带数字的寄存器. 每个寄存器的大小为8个字节, 当然, 也可以访问其低4个字节. 在下图中, 前面的表示8字节, 后面的表示低4字节.
 
-![](assets/ics-walkthrough/x86-int-registers.png)
+![](../assets/ics-walkthrough/x86-int-registers.png)
 
 汇编语言可执行的操作包括
 - 在寄存和内存之间移动数据
@@ -103,12 +103,12 @@ salq $2, %rax  # t = t * 4
 ### 算术运算
 一些常见的双操作数指令
 
-![](assets/ics-walkthrough/two-operand-inst.png)
+![](../assets/ics-walkthrough/two-operand-inst.png)
 
 这些指令不区分`int`和`uint`类型, 因为二者的操作在代码上是一致的.
 
 一些常见的单操作数指令
 
-![](assets/ics-walkthrough/one-operand-inst.png)
+![](../assets/ics-walkthrough/one-operand-inst.png)
 
 ## 控制
