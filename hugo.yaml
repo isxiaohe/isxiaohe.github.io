@@ -3,6 +3,23 @@ languageCode: zh-cn
 title: 小鹤
 theme: PaperMod
 
+markup:
+  goldmark:
+    extensions:
+      passthrough:
+        delimiters:
+          block:
+          - - \[
+            - \]
+          - - $$
+            - $$
+          inline:
+          - - \(
+            - \)
+          - - $
+            - $
+        enable: true
+
 params:
   profileMode:
     enabled: true
@@ -17,6 +34,8 @@ params:
         url: "/publications"
       - name: Posts
         url: "/posts"
+  
+  math: true
 
   socialIcons:
     - name: Github
@@ -36,29 +55,7 @@ params:
   features:
     - search
 
-markup:
-  defaultMarkdownHandler: goldmark
-  goldmark:
 
-    renderer:
-      unsafe: true
-    extensions:
-      cjk:
-        enabled: true
-      passthrough:
-      passthrough:
-        delimiters:
-          block:
-          - - \[
-            - \]
-          - - $$
-            - $$
-          inline:
-          - - $
-            - $
-        enable: true
-  latexdfm:
-    enable: true
 
 menu:
   main:

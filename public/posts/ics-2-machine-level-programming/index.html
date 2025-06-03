@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="noindex, nofollow">
+<title>ICS-2-程序的机器级表示 | 小鹤</title>
+<meta name="keywords" content="ICS, 计算机系统, computer system">
+<meta name="description" content="ICS笔记的第二部分, 介绍了在更接近硬件的层面上, 程序是如何表示的">
+<meta name="author" content="">
+<link rel="canonical" href="http://localhost:1313/posts/ics-2-machine-level-programming/">
+<link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
+<link rel="icon" href="http://localhost:1313/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://localhost:1313/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png">
+<link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/ics-2-machine-level-programming/">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --code-block-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://localhost:1313/" accesskey="h" title="小鹤 (Alt + H)">小鹤</a>
+            <div class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)" aria-label="Toggle theme">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="18" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://localhost:1313/posts/" title="Posts">
+                    <span>Posts</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/publications/" title="Publications">
+                    <span>Publications</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://localhost:1313/tags/" title="Tags">
+                    <span>Tags</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      ICS-2-程序的机器级表示
+    </h1>
+    <div class="post-meta"><span title='2025-05-29 00:00:00 +0000 UTC'>May 29, 2025</span>
+
+</div>
+  </header> 
+  <div class="post-content"><h2 id="从c语言到机器码">从C语言到机器码<a hidden class="anchor" aria-hidden="true" href="#从c语言到机器码">#</a></h2>
+<p>C语言是一种高级语言, 其内容更接近自然语言, 而机器执行的是显然不是这些&quot;自然语言&quot;, 而是一些类似<code>00100011</code>的二进制字符串. 所以在执行一个由C语言编写的程序之前, 我们必须先通过&quot;编译器&quot;将其转化为机器能够执行的代码, 也就是所谓的<strong>机器码</strong>.</p>
+<p>事实上, 在半个世纪之前, 程序员们只能使用机器码编写程序. 为了避免直接编写二进制字符串, 人们发明了<strong>汇编语言</strong>. 汇编语言和机器码是一一对应的. 可以说, 汇编语言是&quot;可读的机器码&quot;.</p>
+<p>汇编语言的规定是由<strong>ISA</strong>(指令集架构)给出的. ISA规定了汇编语言这个层面的语法和语义, 这些规定是和硬件特征紧密相关的. 由于不同的硬件支持的ISA并不相同, 所以同一段C代码在不同的硬件上可能产生不同的机器码.</p>
+<p>汇编语言的操作对象也并非直接是机器的硬件, 而是对硬件的抽象. 具体而言, 我们认为汇编语言操作的是<strong>CPU</strong>和<strong>Memory</strong>.</p>
+<p><img loading="lazy" src="../assets/ics-walkthrough/assembly-view.png"></p>
+<p>汇编语言可见(可操作)的部分包括</p>
+<ul>
+<li>CPU
+<ul>
+<li>寄存器: 用于保存一些被频繁使用的数据</li>
+<li>PC: 指向下一条指令的地址</li>
+<li>条件码: 用于保存上一条指令的结果, 用于判断分支</li>
+</ul>
+</li>
+<li>Memory: 包括程序, 数据, 堆, 栈等</li>
+</ul>
+<p>x86-64包括16个整数寄存器, 更具体的, 一共有8个有名字的寄存器和8个带数字的寄存器. 每个寄存器的大小为8个字节, 当然, 也可以访问其低4个字节. 在下图中, 前面的表示8字节, 后面的表示低4字节.</p>
+<p><img loading="lazy" src="../assets/ics-walkthrough/x86-int-registers.png"></p>
+<p>汇编语言可执行的操作包括</p>
+<ul>
+<li>在寄存和内存之间移动数据</li>
+<li>执行算术和逻辑运算</li>
+<li>控制程序的执行(比如分支之类)</li>
+</ul>
+<p>接下来我们将分别介绍这些操作.</p>
+<h2 id="汇编基础x86-64">汇编基础(x86-64)<a hidden class="anchor" aria-hidden="true" href="#汇编基础x86-64">#</a></h2>
+<h3 id="数据的移动">数据的移动<a hidden class="anchor" aria-hidden="true" href="#数据的移动">#</a></h3>
+<p>汇编码的格式为</p>
+<pre tabindex="0"><code class="language-assembly" data-lang="assembly">movq Source, Dest
+</code></pre><p>其中的<strong>操作数</strong>可能是</p>
+<ul>
+<li>立即数: 整数常量, 形式如<code>$0xf``0b1001</code></li>
+<li>寄存器: 寄存器中的值, 形式如<code>%rax</code></li>
+<li>内存: 内存中的值, 形式如<code>(%rax)</code></li>
+</ul>
+<p>事实上允许的移动方式只有五种</p>
+<p><img loading="lazy"></p>
+<p>并不允许直接<code>Mem-&gt;Mem</code>, 而是必须先将<code>Mem-&gt;Reg</code>, 然后<code>Reg-&gt;Mem</code>.</p>
+<p>一个简单的例子</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">swap</span>(<span style="color:#66d9ef">long</span> <span style="color:#f92672">*</span>xp, <span style="color:#66d9ef">long</span> <span style="color:#f92672">*</span>yp) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">long</span> t0 <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>xp;  <span style="color:#66d9ef">long</span> t1 <span style="color:#f92672">=</span> <span style="color:#f92672">*</span>yp;  <span style="color:#f92672">*</span>xp <span style="color:#f92672">=</span> t1;  <span style="color:#f92672">*</span>yp <span style="color:#f92672">=</span> t0;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><pre tabindex="0"><code class="language-assembly" data-lang="assembly">swap:  
+    movq  (%rdi), %rax  # t0 = *xp  
+    movq  (%rsi), %rdx  # t1 = *yp 
+    movq  %rdx, (%rdi)  # *xp = t1 
+    movq  %rax, (%rsi)  # *yp = t0 
+    ret
+</code></pre><p>(你的机器当然可能产生不一样的机器码/汇编代码)</p>
+<p>一个有意思的问题是内存是如何寻址的. 完整的<strong>寻址模式</strong>是</p>
+<pre tabindex="0"><code class="language-assembly" data-lang="assembly">D(Rb, Ri, S)   # Mem[Reg[Rb] + S * Reg[Ri] + D]
+</code></pre><p><code>S</code>一般是<code>1</code>, <code>2</code>, <code>4</code>, <code>8</code>(为何如此? 思考一下常用的数据类型!)</p>
+<p>寻址模式也常用于算术计算. 我们先了解一下<code>leaq</code>指令</p>
+<pre tabindex="0"><code class="language-assembly" data-lang="assembly">leaq Source, Dest
+</code></pre><p><code>leaq</code>指令的功能是计算<code>Source</code>表示的地址, 然后将其赋值给<code>Dest</code>. 其中<code>Source</code>为寻址模式. 类似C语言中的<code>p=&amp;x[i]</code>之类. 我们利用寻址模式的特性可以进行一些代数运算</p>
+<pre tabindex="0"><code class="language-assembly" data-lang="assembly">leaq (%rdi, %rdi, 2), %rax  # t = xp + 2 * xp
+salq $2, %rax  # t = t * 4
+</code></pre><p>上述的意义是将<code>%rdi</code>的值乘12, 然后赋值给<code>%rax</code>.</p>
+<p>有必要解释一下: <code>()</code>代表使用寻址模式进行计算, 但在<code>movq</code>中会去读取对应地址上的值, 在<code>leaq</code>中则会直接使用地址(类似C语言<code>&amp;x[i]</code>).</p>
+<pre><code>  ⚠️warning: 在intel的文档中, `Source`和`Dest`的顺序与此处的顺序相反, 我们在此使用的是Linux中的顺序.
+</code></pre>
+<h3 id="算术运算">算术运算<a hidden class="anchor" aria-hidden="true" href="#算术运算">#</a></h3>
+<p>一些常见的双操作数指令</p>
+<p><img loading="lazy" src="../assets/ics-walkthrough/two-operand-inst.png"></p>
+<p>这些指令不区分<code>int</code>和<code>uint</code>类型, 因为二者的操作在代码上是一致的.</p>
+<p>一些常见的单操作数指令</p>
+<p><img loading="lazy" src="../assets/ics-walkthrough/one-operand-inst.png"></p>
+<h2 id="控制">控制<a hidden class="anchor" aria-hidden="true" href="#控制">#</a></h2>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+      <li><a href="http://localhost:1313/tags/ics/">ICS</a></li>
+      <li><a href="http://localhost:1313/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/">计算机系统</a></li>
+      <li><a href="http://localhost:1313/tags/computer-system/">Computer System</a></li>
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+        <span>&copy; 2025 <a href="http://localhost:1313/">小鹤</a></span> · 
+
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://github.com/adityatelange/hugo-PaperMod/" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

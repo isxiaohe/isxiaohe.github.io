@@ -5,11 +5,31 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="noindex, nofollow">
-<title>404 Page not found | 小鹤</title>
+<title>小鹤</title>
 <meta name="keywords" content="">
-<meta name="description" content="">
+<meta name="description" content="信息与系统-1-信号与系统介绍
+信号
+信号是一元或者多元函数, 一些典型例子包括: 声音信号(时间的函数), 数字图像信号(行列号的函数). 在本课程中我们更多考查一元函数, 且一般会认为这个变量是时间.
+我们一般认为定义在实数域 $\mathbb{R}$ 上的信号是连续信号, 记作 $x(t)$ ; 定义在整数上的信号是离散信号, 记作 $x[n]$. 在大多数情况下, 基于上下文很容易推断我们在讨论连续还是离散的, 所以可能会出现用 $x(n)$ 表示离散信号的情况. 这是可以容忍的符号滥用(起码我可以忍受).
+在很多情况下我们会先讨论离散信号的一些性质, 然后再将这些性质符合直觉地推广到连续信号(虽然并非总是如此), 按照这个逻辑, 我们可以串联起信号与系统这门课程中的大部分主题.
+让我们先来讨论两个常见的离散信号: Unit Impulse 和 Unit Step
+
+\[
+    \text{Unit Impulse } \delta[n] = 
+    \begin{cases}
+        1 & \text{, } n = 0,\\
+        0 & \text{otherwise}.
+    \end{cases}    
+\]\[
+    \text{Unit Step } u(n) = 
+    \begin{cases}
+        1 & \text{, } n \geq 0,\\
+        0 & \text{otherwise}.
+    \end{cases}    
+\]
+">
 <meta name="author" content="">
-<link rel="canonical" href="http://localhost:1313/404.html">
+<link rel="canonical" href="http://localhost:1313/posts/ee120-1-signals-and-systems/">
 <link crossorigin="anonymous" href="/assets/css/stylesheet.8fe10233a706bc87f2e08b3cf97b8bd4c0a80f10675a143675d59212121037c0.css" integrity="sha256-j&#43;ECM6cGvIfy4Is8&#43;XuL1MCoDxBnWhQ2ddWSEhIQN8A=" rel="preload stylesheet" as="style">
 <link rel="icon" href="http://localhost:1313/favicon.ico">
 <link rel="icon" type="image/png" sizes="16x16" href="http://localhost:1313/favicon-16x16.png">
@@ -18,7 +38,7 @@
 <link rel="mask-icon" href="http://localhost:1313/safari-pinned-tab.svg">
 <meta name="theme-color" content="#2e2e33">
 <meta name="msapplication-TileColor" content="#2e2e33">
-<link rel="alternate" hreflang="en" href="http://localhost:1313/404.html">
+<link rel="alternate" hreflang="en" href="http://localhost:1313/posts/ee120-1-signals-and-systems/">
 <noscript>
     <style>
         #theme-toggle,
@@ -69,7 +89,7 @@
     
 </head>
 
-<body class="list" id="top">
+<body class="" id="top">
 <script>
     if (localStorage.getItem("pref-theme") === "dark") {
         document.body.classList.add('dark');
@@ -128,7 +148,53 @@
     </nav>
 </header>
 <main class="main">
-<div class="not-found">404</div>
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title entry-hint-parent">
+      
+    </h1>
+    <div class="post-meta">
+
+</div>
+  </header> 
+  <div class="post-content"><h1 id="信息与系统-1-信号与系统介绍">信息与系统-1-信号与系统介绍<a hidden class="anchor" aria-hidden="true" href="#信息与系统-1-信号与系统介绍">#</a></h1>
+<h2 id="信号">信号<a hidden class="anchor" aria-hidden="true" href="#信号">#</a></h2>
+<p><strong>信号</strong>是一元或者多元函数, 一些典型例子包括: 声音信号(时间的函数), 数字图像信号(行列号的函数). 在本课程中我们更多考查一元函数, 且一般会认为这个变量是时间.</p>
+<p>我们一般认为定义在实数域 $\mathbb{R}$ 上的信号是连续信号, 记作 $x(t)$ ; 定义在整数上的信号是离散信号, 记作 $x[n]$. 在大多数情况下, 基于上下文很容易推断我们在讨论连续还是离散的, 所以可能会出现用 $x(n)$ 表示离散信号的情况. 这是可以容忍的符号滥用(起码我可以忍受).</p>
+<p>在很多情况下我们会先讨论离散信号的一些性质, 然后再将这些性质符合直觉地推广到连续信号(虽然并非总是如此), 按照这个逻辑, 我们可以串联起信号与系统这门课程中的大部分主题.</p>
+<p>让我们先来讨论两个常见的离散信号: <strong>Unit Impulse</strong> 和 <strong>Unit Step</strong>
+</p>
+\[
+    \text{Unit Impulse } \delta[n] = 
+    \begin{cases}
+        1 & \text{, } n = 0,\\
+        0 & \text{otherwise}.
+    \end{cases}    
+\]\[
+    \text{Unit Step } u(n) = 
+    \begin{cases}
+        1 & \text{, } n \geq 0,\\
+        0 & \text{otherwise}.
+    \end{cases}    
+\]<p><img loading="lazy" src="../assets/ee120-signal-system/1-unit-impulse.png"><br>
+<img loading="lazy" src="../assets/ee120-signal-system/1-unit-step.png"></p>
+<p>有关这两个信号有一些很有意义的结论.</p>
+<p>首先, 对于任意的整数 $n$, 我们有 $u[n] = \Sigma_{k=-\infty}^n \delta[k] = \Sigma_{l=0}^\infty \delta[n-l]$.</p>
+<p>事实上, 我们可以断言: <strong>任意离散信号 $x[n]$, 是 $\delta[n]$ 的线性加和, 且 $x[n] = \Sigma_{k=-\infty}^\infty x[k]\delta[n-k]$</strong>. 这个结论比较显然, 因为在右式中只有当 $k = n$ 时, $\delta[n-k]$ 才非零.</p>
+<h2 id="系统">系统<a hidden class="anchor" aria-hidden="true" href="#系统">#</a></h2>
+<p><strong>系统</strong>被定义为由信号到信号的映射. 我们一般写作 $x \to H \to y$, 信号 $x$ 经系统 $H$ 变作了 $y$. $x, y$ 都可能是连续或者离散的.</p>
+<p>系统是极其多样的, 我们只要保证每一个输入信号都有唯一一个输出信号对应, 那这个信号变化就是一个系统.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
     </main>
     
 <footer class="footer">

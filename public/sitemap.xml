@@ -8,7 +8,7 @@
     <loc>http://localhost:1313/tags/ics/</loc>
     <lastmod>2025-05-29T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>http://localhost:1313/posts/2-machine-level-programming/</loc>
+    <loc>http://localhost:1313/posts/ics-2-machine-level-programming/</loc>
     <lastmod>2025-05-29T00:00:00+00:00</lastmod>
   </url><url>
     <loc>http://localhost:1313/posts/</loc>
@@ -22,6 +22,8 @@
   </url><url>
     <loc>http://localhost:1313/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/</loc>
     <lastmod>2025-05-29T00:00:00+00:00</lastmod>
+  </url><url>
+    <loc>http://localhost:1313/posts/ee120-1-signals-and-systems/</loc>
   </url><url>
     <loc>http://localhost:1313/categories/</loc>
   </url><url>

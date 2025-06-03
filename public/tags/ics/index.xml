@@ -10,9 +10,9 @@
     <atom:link href="http://localhost:1313/tags/ics/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>ICS-2-程序的机器级表示</title>
-      <link>http://localhost:1313/posts/2-machine-level-programming/</link>
+      <link>http://localhost:1313/posts/ics-2-machine-level-programming/</link>
       <pubDate>Thu, 29 May 2025 00:00:00 +0000</pubDate>
-      <guid>http://localhost:1313/posts/2-machine-level-programming/</guid>
+      <guid>http://localhost:1313/posts/ics-2-machine-level-programming/</guid>
       <description>ICS笔记的第二部分, 介绍了在更接近硬件的层面上, 程序是如何表示的</description>
     </item>
   </channel>
