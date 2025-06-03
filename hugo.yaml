@@ -54,9 +54,11 @@ markup:
           - - $$
             - $$
           inline:
-          - - \(
-            - \)
+          - - $
+            - $
         enable: true
+  latexdfm:
+    enable: true
 
 menu:
   main:
