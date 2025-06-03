@@ -36,6 +36,28 @@ params:
   features:
     - search
 
+markup:
+  defaultMarkdownHandler: goldmark
+  goldmark:
+
+    renderer:
+      unsafe: true
+    extensions:
+      cjk:
+        enabled: true
+      passthrough:
+      passthrough:
+        delimiters:
+          block:
+          - - \[
+            - \]
+          - - $$
+            - $$
+          inline:
+          - - \(
+            - \)
+        enable: true
+
 menu:
   main:
     - identifier: tag
