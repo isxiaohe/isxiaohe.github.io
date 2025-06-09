@@ -1,5 +1,5 @@
 ---
-title: "ICS-2-程序的机器级表示"
+title: "ICS 2. 程序的机器级表示"
 date: 2025-05-29
 draft: false
 type: "post"
