@@ -3,19 +3,23 @@
     <header class="entry-header">
         <h1>{{ .Title | markdownify }}</h1>
     </header>
-    <div class="entry-content">
-        {{ .Content | markdownify }}
-        
-        <br><br>
-        
-        {{/* 自动获取并显示 publications 内容 */}}
-        {{ $publications := site.GetPage "/publications" }}
-        {{ if $publications }}
-        {{ $publications.Content }}
-        {{ end }}
-    </div>
+
     <footer class="entry-footer">
         {{ partial "social_icons.html" (dict "align" site.Params.homeInfoParams.AlignSocialIconsTo) }}
     </footer>
+    
+    <div class="entry-content">
+        {{ .Content | markdownify }}
+        
+        <div style="margin: 30px 0;"></div>
+
+        {{/* 自动获取并显示 publications 内容 */}}
+        {{ $publications := site.GetPage "/publications" }}
+        {{ if $publications }}
+        <div class="publications-section">
+            {{ $publications.Content | replaceRE "<h1>" "<h1 class=\"entry-header\">" | safeHTML }}
+        </div>
+        {{ end }}
+    </div>
 </article>
 {{- end -}}
