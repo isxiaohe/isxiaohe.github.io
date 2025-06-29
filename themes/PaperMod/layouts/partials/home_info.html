@@ -5,6 +5,18 @@
     </header>
     <div class="entry-content">
         {{ .Content | markdownify }}
+        
+        {{/* 自动获取并显示 publications 内容 */}}
+        {{ $publications := site.GetPage "/publications" }}
+        {{ if $publications }}
+        {{ $publications.Content }}
+        {{ end }}
+        
+        <hr style="margin: 20px 0;">
+        <p style="text-align: center;">
+            <a href="/publications" style="margin: 0 10px;">📄 Full Publications</a>
+            <a href="/posts" style="margin: 0 10px;">📝 Posts</a>
+        </p>
     </div>
     <footer class="entry-footer">
         {{ partial "social_icons.html" (dict "align" site.Params.homeInfoParams.AlignSocialIconsTo) }}
