@@ -1,9 +1,10 @@
 ---
-title: "Publications"
+# title: "Publications"
 layout: "page"
 url: "/publications"
 summary: "publications"
 ---
+# My Publication
 
 ### Conference Papers
 
