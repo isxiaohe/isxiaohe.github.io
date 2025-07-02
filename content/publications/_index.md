@@ -4,11 +4,11 @@ layout: "page"
 url: "/publications"
 summary: "publications"
 ---
-# My Publication
+# Publications
 
-### Conference Papers
+You can also find my publications on my [Google Scholar profile](isxiaohe.github.io).
+...Oops, it seems that I don't have one 🤭.
 
-None
-### Journal Articles
+#### [Nothing's here...](isxiaohe.github.io)
 
-None
+
