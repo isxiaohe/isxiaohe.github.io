@@ -48,7 +48,9 @@ params:
   customCSS:
     - css/custom.css
 
-
+  ShowToc: true # 全局启用页面目录（侧边栏）
+  TocOpen: true
+  
 
 menu:
   main:
