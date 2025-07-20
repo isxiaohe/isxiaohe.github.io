@@ -6,9 +6,9 @@ summary: "publications"
 ---
 # Publications
 
-You can also find my publications on my [Google Scholar profile](isxiaohe.github.io).
+You can also find my publications on my Google Scholar profile.
 ...Oops, it seems that I don't have one 🤭.
 
-#### [Nothing's here...](isxiaohe.github.io)
+#### Nothing's here...
 
 

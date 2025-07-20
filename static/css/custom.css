@@ -1,0 +1,16 @@
+/* 确保样式覆盖，增加选择器优先级并使用 !important */
+.first-entry.home-info .entry-content,
+.entry-content,
+.post-content {
+  font-size: 0.9rem !important;
+}
+
+/* KaTeX 公式尺寸 */
+.first-entry.home-info .entry-content .katex,
+.first-entry.home-info .entry-content .katex-display,
+.entry-content .katex,
+.post-content .katex,
+.entry-content .katex-display,
+.post-content .katex-display {
+  font-size: 0.8em !important;
+}

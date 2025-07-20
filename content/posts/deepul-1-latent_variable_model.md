@@ -11,11 +11,11 @@ tags: ["VAE", "无监督学习", "unsupervised learning"]
 
 - 生成符合真实数据分布的新数据(数据的"生成")
 - 提取某一真实数据的特征(数据的"压缩")
-真实数据往往是复杂并且高维的, 所以我们希望能够用一个更简单的分布(比如高斯分布)来表示真实数据. 具体来说, 隐变量模型通过建立一个从简单分布到真实分布的变换来完成无监督学习的生成任务(即生成新数据):
-    \[
-        z \to x
-    \]
 
+真实数据往往是复杂并且高维的, 所以我们希望能够用一个更简单的分布(比如高斯分布)来表示真实数据. 具体来说, 隐变量模型通过建立一个从简单分布(这个简单分布是可以预先选定的, 一般会选标准正态分布)到真实分布的变换来完成无监督学习的生成任务(即生成新数据):
+    \[
+        z \to x.
+    \]
 也就是说, 我们希望得到这样一个模型, 我们从一个简单的分布(比如高斯分布)中采样 \(z \sim p_Z(z)\), 通过这个模型能够得到一个条件分布 \(p_\theta (x|z)\), 我们就能得到一个符合真实数据分布的新数据.
 
 更确切的说, 我们可以得到如下的内容
@@ -51,13 +51,13 @@ tags: ["VAE", "无监督学习", "unsupervised learning"]
 
 由于
     \[
-        E_{z \sim p_Z(z)} (f(z)) = \int p_Z(z) f(z) dz 
-        \\ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        = \int \frac{q(z)}{q(z)} p_Z(z) f(z) dz 
-        \\ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        = E_{z \sim q(z)} (\frac{p_Z(z)}{q(z)} f(z))
+        \begin{align*}
+            E_{z \sim p_Z(z)} (f(z)) 
+            &= \int p_Z(z) f(z) dz \\
+            &= \int \frac{q(z)}{q(z)} p_Z(z) f(z) dz \\
+            &= E_{z \sim q(z)} (\frac{p_Z(z)}{q(z)} f(z))
+        \end{align*}
     \]
-
 于是乎, 我们的训练目标可以改写为
     \[
         \sum_i log ~ \sum_z p_Z(z) p_\theta(x|z) = \sum_i log \frac{1}{K} \sum_k \frac{p_Z(z_k^{(i)})}{q(z_k^{(i)})} p_\theta(x^{(i)}|z_k^{(i)})
@@ -71,11 +71,12 @@ tags: ["VAE", "无监督学习", "unsupervised learning"]
 
 我们希望 \(q(z)\) 尽可能符合 \(p_\theta(z|x^{(i)})\), 也就是
     \[
-        min_{q(z)} KL(q(z)||p_\theta(z|x^{(i)}))
-        \\ = min_{q(z)} ~ E_{z \sim q(z)} log (\frac{q(z)}{p_\theta(z|x^{(i)})})
-        \\ = min_{q(z)} ~ E_{z \sim q(z)} log (\frac{q(z)}{p_\theta(x^{(i)}|z) p_\theta(z) / p_\theta(x)}) 
-        \\ ~
-        \\ = min_{q(z)} ~ E_{z \sim q(z)} (log ~ q(z) - log ~ p_\theta(z) - log ~ p_\theta(x^{(i)}|z)) + C
+        \begin{align*}
+            min_{q(z)} KL(q(z)||p_\theta(z|x^{(i)}))
+            &= min_{q(z)} ~ E_{z \sim q(z)} log (\frac{q(z)}{p_\theta(z|x^{(i)})}) \\
+            &= min_{q(z)} ~ E_{z \sim q(z)} log (\frac{q(z)}{p_\theta(x^{(i)}|z) p_\theta(z) / p_\theta(x)}) \\
+            &= min_{q(z)} ~ E_{z \sim q(z)} (log ~ q(z) - log ~ p_\theta(z) - log ~ p_\theta(x^{(i)}|z)) + C
+        \end{align*}
     \]
 这最后得到的每一项都是可以求得的.
 
@@ -83,18 +84,22 @@ tags: ["VAE", "无监督学习", "unsupervised learning"]
 
 上述也就可以改写为
     \[
-        min_\phi KL(q_\phi(z|x^{(i)})||p_\theta(z|x^{(i)}))
+        min_\phi KL(q_\phi(z|x^{(i)})||p_{\theta}(z|x^{(i)}))
     \]
+
+值得注意的是, 我们无法直接得到 \(p_{\theta}(z|x^{(i)})\), 所以在实际训练的过程中, 我们往往考虑 \(min_\phi \sum_i KL(q_\phi(z|x^{(i)})||p_Z(z))\), 也就是让\(q(z|x)\)整体接近分布\(p_Z(z)\), 而\(p_Z(z)\)是已知的. 这个操作是合理的, 因为我们之前说过\(q(z)\)可以是任何分布, 但是这个操作对结果稳定性有一定的负面影响.
 
 这样, 我们的模型最终是这样的
     \[
-        z \xrightleftarrows[p_\theta(x|z)]{q_\phi(z|x)} x
+        z \xrightleftarrows[p_{\theta}(x|z)]{q_\phi(z|x)} x
     \]
 
-### VLB与VAE
+在训练过程中, 我们通过一个`encoder`网络来指导采样, 再将采样得到的隐变量通过另一个网络`decoder`得到样本. 而在下一小节中, 我们将介绍损失函数的形式, 以及为什么这个优化目标是可行的.
+
+### ELBO/VLB
 论文[Auto-Encoding Variational Bayes](https://arxiv.org/abs/1312.6114)提出了VLB(Variational lower bound), 并证明了将其作为模型最终的训练目标的可行性.
 
-
+以下我们可以从两个角度来思考
 
 **VLB的推导(1)**
 
@@ -105,23 +110,26 @@ tags: ["VAE", "无监督学习", "unsupervised learning"]
 
 首先
     \[
-        \sum_i log ~ ~ p_\theta(x^{(i)}) \\
-        = \sum_i log ~ (\sum_z ~ p_Z(z) p_\theta(x^{(i)}|z))\\
-        = \sum_i log ~ (\sum_z ~ \frac{q(z)}{q(z)} p_Z(z) p_\theta(x^{(i)}|z))\\
-        \geq E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_\theta(x^{(i)}|z))\\ ~ \\
+        \begin{align*}
+            \sum_i log ~ ~ p_{\theta}(x^{(i)})
+            &= \sum_i log ~ (\sum_z ~ p_Z(z) p_{\theta}(x^{(i)}|z))\\
+            &= \sum_i log ~ (\sum_z ~ \frac{q(z)}{q(z)} p_Z(z) p_{\theta}(x^{(i)}|z))\\
+            &\geq E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z))
+        \end{align*}
     \]
 (最后一步用到Jensen不等式)
 
-由上述推导, 我们知道\(E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_\theta(x^{(i)}|z))\) 是似然函数的下界, 称为 VLB.
+由上述推导, 我们知道\(E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z))\) 是似然函数的下界, 称为 VLB(也称作ELBO).
 
 我们仍然希望最大化似然函数, 其实只需要最大化最后这个下界
     \[
-        max_\theta \sum_i log ~ p_theta(x^{(i)}) \\
-        = max_theta E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_\theta(x^{(i)}|z)) \\
-        ~ \\
-        = max_\theta ~ max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_\theta(x^{(i)}|z)) \\
+        \begin{align*}
+            &max_{\theta} \sum_i log ~ p_{\theta}(x^{(i)}) \\
+            &= max_{\theta} E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z)) \\
+            &= max_{\theta} ~ max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_{\theta}(x^{(i)}|z))
+        \end{align*}
     \]
-而其中 \(max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_\theta(x^{(i)}|z))\) 的部分实际上就是在 \(min_\phi KL(q_\phi(z|x^{(i)})||p_\theta(z|x^{(i)}))\) (我们在上一个部分推导过了).
+而其中 \(max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_{\theta}(x^{(i)}|z))\) 的部分实际上就是在 \(min_\phi KL(q_\phi(z|x^{(i)})||p_{\theta}(z|x^{(i)}))\) (我们在上一个部分推导过了).
 
 **VLB的推导(2)**
 
@@ -134,3 +142,30 @@ tags: ["VAE", "无监督学习", "unsupervised learning"]
 当 \(q_x(z)\) 和 \(p(z|x)\) 一致时(KL散度为0), 似然函数就是VLB.
 
 通过上述两种不同方式我们都能够得到最终的优化目标是最大化VLB, 最小化KL散度. 
+
+### 重参数化(Reparameterization Trick)
+
+回顾一下VAE的模型, 隐变量是基于\(z \sim p(z)\)采样得到的, 但采样这个操作并不可导, 梯度没办法回传给`encoder`. 在这里有一个技巧是重参数化, 将采样过程变得可导
+    \[
+        z \sim q_\phi (z|x), ~ z = \mu_\phi (x) + \sigma_\phi (x) \cdot \epsilon, ~ \epsilon \sim N(0, 1),
+    \]
+或者写成
+    \[
+        z \sim N(\mu_\phi(x), \sigma_\phi (x)).
+    \]
+具体的操作是只使用`decoder`来获取均值\(\mu\)和方差\(\sigma\), 再通过添加一个随机噪声进行采样. 这个过程是可导的.
+
+重参数化技巧可以推广到更为一般的形式. 还是针对采样 \(z \sim q_\phi(\cdot|x)\), 可以对进行重参数化
+    \[
+        z = g(\phi, \epsilon), \epsilon \sim N(0, 1).
+    \]
+这样一来, 对于函数 \(f\)
+    \[
+        E_{z \sim q_\phi(\cdot|x)}(f(z)) = E_{\epsilon \sim N(0, 1)} [f(g(\phi, \epsilon))]
+    \]
+如果函数\(f\)是可导的, 那么我们有
+    \[
+        \nabla_\phi E_{z \sim q_\phi(\cdot|x)}(f(z)) = E_{\epsilon \sim N(0, 1)} [\nabla_\phi f(g(\phi, \epsilon))].
+    \]
+
+在我们一开始讨论的情况下(也是一般情况下), \(z = \mu_\phi(\cdot) + \epsilon_\phi(\cdot) \cdot \epsilon\); 而在VAE中, \(f\)就是`decoder`.

@@ -45,6 +45,8 @@ params:
 
   features:
     - search
+  customCSS:
+    - css/custom.css
 
 
 
