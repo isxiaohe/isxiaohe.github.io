@@ -123,50 +123,50 @@ $$
 
 1. **VLB的推导(1)**
 
-第一个推导VLB的方式使用了Jensen不等式
+    第一个推导VLB的方式使用了Jensen不等式
 
-$$
-log ~ E (z) \geq E (log ~ z)
-$$
+    $$
+    log ~ E (z) \geq E (log ~ z)
+    $$
 
-首先
+    首先
 
-$$
-\begin{align*}
-\sum_i log ~ ~ p_{\theta}(x^{(i)})
-&= \sum_i log ~ (\sum_z ~ p_Z(z) p_{\theta}(x^{(i)}|z))\\
-&= \sum_i log ~ (\sum_z ~ \frac{q(z)}{q(z)} p_Z(z) p_{\theta}(x^{(i)}|z))\\
-&\geq E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z))
-\end{align*}
-$$
+    $$
+    \begin{align*}
+    \sum_i log ~ ~ p_{\theta}(x^{(i)})
+    &= \sum_i log ~ (\sum_z ~ p_Z(z) p_{\theta}(x^{(i)}|z))\\
+    &= \sum_i log ~ (\sum_z ~ \frac{q(z)}{q(z)} p_Z(z) p_{\theta}(x^{(i)}|z))\\
+    &\geq E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z))
+    \end{align*}
+    $$
 
-(最后一步用到Jensen不等式)
+    (最后一步用到Jensen不等式)
 
-由上述推导, 我们知道$E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z))$ 是似然函数的下界, 称为 VLB(也称作ELBO).
+    由上述推导, 我们知道$E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z))$ 是似然函数的下界, 称为 VLB(也称作ELBO).
 
-我们仍然希望最大化似然函数, 其实只需要最大化最后这个下界
+    我们仍然希望最大化似然函数, 其实只需要最大化最后这个下界
 
-$$
-\begin{align*}
-&max_{\theta} \sum_i log ~ p_{\theta}(x^{(i)}) \\
-&= max_{\theta} E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z)) \\
-&= max_{\theta} ~ max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_{\theta}(x^{(i)}|z))
-\end{align*}
-$$
+    $$
+    \begin{align*}
+    &max_{\theta} \sum_i log ~ p_{\theta}(x^{(i)}) \\
+    &= max_{\theta} E_{q(z)} (log ~ p(z) - log ~ q(z) + log ~ p_{\theta}(x^{(i)}|z)) \\
+    &= max_{\theta} ~ max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_{\theta}(x^{(i)}|z))
+    \end{align*}
+    $$
 
-而其中 $max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_{\theta}(x^{(i)}|z))$ 的部分实际上就是在 $min_\phi KL(q_\phi(z|x^{(i)})||p_{\theta}(z|x^{(i)}))$ (我们在上一个部分推导过了).
+    而其中 $max_\phi E_{q_\phi(z)} (log ~ p(z) - log ~ q_\phi(z|x^{(i)}) + log ~ p_{\theta}(x^{(i)}|z))$ 的部分实际上就是在 $min_\phi KL(q_\phi(z|x^{(i)})||p_{\theta}(z|x^{(i)}))$ (我们在上一个部分推导过了).
 
-1. **VLB的推导(2)**
+2. **VLB的推导(2)**
 
-我们可以得到
+    我们可以得到
 
-$$
-log ~ p(x) = E_{q_x(z)} (log ~ p(z) - log ~ q_x(z) + log ~ p(x|z)) + KL(q_x(z) || p(z|x))
-$$
+    $$
+    log ~ p(x) = E_{q_x(z)} (log ~ p(z) - log ~ q_x(z) + log ~ p(x|z)) + KL(q_x(z) || p(z|x))
+    $$
 
-即似然函数和VLB相差的正是一个KL散度(KL散度是大于等于0的). 所以VLB确实是对数似然函数的下界.
+    即似然函数和VLB相差的正是一个KL散度(KL散度是大于等于0的). 所以VLB确实是对数似然函数的下界.
 
-当 $q_x(z)$ 和 $p(z|x)$ 一致时(KL散度为0), 似然函数就是VLB.
+    当 $q_x(z)$ 和 $p(z|x)$ 一致时(KL散度为0), 似然函数就是VLB.
 
 通过上述两种不同方式我们都能够得到最终的优化目标是最大化VLB, 最小化KL散度.
 
