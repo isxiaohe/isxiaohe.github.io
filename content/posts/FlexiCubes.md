@@ -1,9 +1,9 @@
 ---
-title: "PixelCubes"
+title: "FlexiCubes"
 date: 2025-08-25
 draft: false
 type: "post"
-summary: "介绍了PixelCubes, 一种新的等值面提取方式"
+summary: "介绍了FlexiCubes, 一种新的等值面提取方式"
 tags: ["Graphics", "Differential Rendering", "3D Representation"]
 ---
 
