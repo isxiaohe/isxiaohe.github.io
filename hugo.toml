@@ -1,0 +1,44 @@
+baseURL = "https://isxiaohe.github.io"   # Your local network IP
+languageCode = "en-us"
+title = "Zhifei Yang"
+theme = "archie"
+# copyright = "© 2025 isxiaohe"
+
+
+# Syntax highlighting settings
+pygmentsstyle = "monokai"
+pygmentscodefences = true
+pygmentscodefencesguesssyntax = true
+
+[pagination]
+  pagerSize = 5  # Number of posts per page
+
+[params]
+  mode = "auto"          # Light/dark mode: auto, light, dark, or toggle
+  useCDN = false         # Use local fonts/icons instead of CDN
+  subtitle = "isxiaohe"
+  mathjax = true        # Enable MathJax support for LaTeX math
+  katex = true     # KaTeX disabled (you can switch to true if preferred)
+
+
+# Main menu navigation
+[[menu.main]]
+  name = "Home"
+  url = "/"
+  weight = 1
+
+[[menu.main]]
+  name = "Publications"
+  url = "/publications"
+  weight = 2
+
+[[menu.main]]
+  name = "Posts"
+  url = "/posts"
+  weight = 3
+
+# Social media links
+[[params.social]]
+  name = "GitHub"
+  icon = "github"
+  url = "https://github.com/isxiaohe"

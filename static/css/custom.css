@@ -1,0 +1,7 @@
+.katex {
+    font-size: 1.4em;       /* 放大公式整体 */
+    line-height: 1.2em;     /* 调整行高 */
+}
+.katex-display {
+    font-size: 1.6em;       /* 放大行间公式 */
+}
