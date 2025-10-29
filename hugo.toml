@@ -20,6 +20,8 @@ pygmentscodefencesguesssyntax = true
   mathjax = true        # Enable MathJax support for LaTeX math
   katex = true     # KaTeX disabled (you can switch to true if preferred)
 
+[markup.goldmark.renderer]
+  unsafe = true
 
 # Main menu navigation
 [[menu.main]]

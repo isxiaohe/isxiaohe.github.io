@@ -1,5 +1,25 @@
 {{ define "main" }}
-  <main class="container">
-    {{ .Content }}
-  </main>
+<div style="max-width:800px; margin:auto; padding:2rem;">
+
+  <div style="display:flex; align-items:center; justify-content:space-between;">
+    <h1 style="margin:0;">Hello, I'm Zhifei Yang 👋</h1>
+    <img src="/images/icon.jpg" alt="icon"
+         style="width:120px; border-radius:50%; box-shadow:0 0 10px rgba(0,0,0,0.2);">
+  </div>
+
+  <p style="margin-top:1rem; font-size:1.1rem; line-height:1.6;">
+    I'm an undergraduate student in Peking University. I'm interested in computer vision and embodied intelligence.
+  </p>
+
+  <hr style="margin:2rem 0; border:none; border-top:1px solid #ddd;">
+
+  <h2><a href="/publications/" style="text-decoration:none; color:inherit;">Publications</a></h2>
+  <p>Nothing here... Coming soon! (I hope)</p>
+
+  <h2><a href="/posts/" style="text-decoration:none; color:inherit;">Posts</a></h2>
+  <ul>
+    <li><strong><a href="/posts/NeRF">NeRF: 用神经网络构建辐射场</a></strong></li>
+  </ul>
+
+</div>
 {{ end }}
