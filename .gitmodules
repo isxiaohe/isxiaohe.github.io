@@ -1,1 +1,3 @@
-
+[submodule "themes/archie"]
+	path = themes/archie
+	url = https://github.com/isxiaohe/archie.git
