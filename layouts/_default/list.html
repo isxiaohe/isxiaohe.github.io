@@ -1,0 +1,37 @@
+{{ define "main" }}
+<h1>{{ .Title }}</h1>
+<div class="publication-list">
+    {{ range .Pages.ByDate.Reverse }}
+    <div class="pub-card">
+        <!-- 左侧：缩略图 -->
+        <div class="pub-thumbnail">
+            {{ if .Params.image }}
+                <img src="{{ .Params.image }}" alt="Paper Thumbnail">
+            {{ else }}
+                <!-- 如果没有图片，可以放一个占位符或保持空白 -->
+                <div class="img-placeholder">NO IMAGE</div>
+            {{ end }}
+        </div>
+
+        <!-- 右侧：文字内容 -->
+        <div class="pub-details">
+            <h3 class="pub-title">{{ .Title }}</h3>
+            <div class="pub-authors">{{ .Params.authors | markdownify }}</div>
+            <div class="pub-venue"><em>{{ .Params.venue }}</em>, {{ .Date.Format "2006" }}</div>
+            
+            {{ if .Params.abstract }}
+            <div class="pub-abstract">
+                {{ .Params.abstract | truncate 250 }} <!-- 截取前250个字符，防止太长 -->
+            </div>
+            {{ end }}
+
+            <div class="pub-links">
+                {{ if .Params.paper }}<a href="{{ .Params.paper }}">[Paper]</a>{{ end }}
+                {{ if .Params.code }}<a href="{{ .Params.code }}">[Code]</a>{{ end }}
+                {{ if .Params.cite }}<a href="{{ .Permalink }}#cite">[Cite]</a>{{ end }}
+            </div>
+        </div>
+    </div>
+    {{ end }}
+</div>
+{{ end }}

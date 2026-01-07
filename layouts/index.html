@@ -1,0 +1,48 @@
+{{ define "main" }}
+<div class="home-container">
+    <!-- 1. 个人简介部分 -->
+    <section class="bio">
+        <!-- <h1 class="name-title">{{ .Site.Title }}</h1> -->
+        <h2>I'm Zhifei Yang</h2>
+        <div class="bio-text">
+            {{ .Content }}
+        </div>
+
+        <div class="links-section"></div>
+            <a href="mailto:{{ .Site.Params.email }}">Email</a>
+            <a href="{{ .Site.Params.cv_url }}">CV (PDF)</a>
+            <a href="{{ .Site.Params.scholar }}">Scholar</a>
+            <a href="{{ .Site.Params.github }}">GitHub</a>
+        </div>
+    </section>
+
+    <!-- 2. 精选论文部分 -->
+    <section class="home-publications" style="margin-top: 60px;">
+        <h2 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Publications</h2>
+        
+        <div class="publication-list">
+            <!-- 逻辑：获取 publications 目录下，按日期倒序排列的前 3 篇 -->
+            {{ $pubs := where (where .Site.RegularPages "Section" "publications") "Params.selected" "==" true }}
+            {{ range $pubs.ByDate.Reverse }}
+            <div class="pub-card" style="padding: 20px 0;">
+                <div class="pub-info">
+                    <h3 class="pub-title" style="font-size: 1.1rem;">
+                        <a href="{{ .Permalink }}" style="text-decoration: none; color: var(--link-blue);">{{ .Title }}</a>
+                    </h3>
+                    <div class="pub-authors" style="font-size: 0.9rem;">{{ .Params.authors | markdownify }}</div>
+                    <div class="pub-venue" style="font-size: 0.9rem; color: #666;">{{ .Params.venue }}, {{ .Date.Format "2006" }}</div>
+                    <div class="pub-links" style="font-size: 0.85rem; margin-top: 8px;">
+                        {{ if .Params.paper }}<a href="{{ .Params.paper }}">[Paper]</a>{{ end }}
+                        {{ if .Params.code }}<a href="{{ .Params.code }}">[Code]</a>{{ end }}
+                    </div>
+                </div>
+            </div>
+            {{ end }}
+        </div>
+
+        <!-- <div style="margin-top: 20px;">
+            <a href="/publications/" style="font-size: 0.9rem; font-weight: 600;">View All Publications →</a>
+        </div> -->
+    </section>
+</div>
+{{ end }}

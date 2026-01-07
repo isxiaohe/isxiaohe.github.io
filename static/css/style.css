@@ -1,0 +1,208 @@
+/* 全局变量：保持宽屏和等宽字体 */
+:root {
+    --max-width: 1100px;
+    --font-main: 'JetBrains Mono', monospace;
+    --bg-color: #ffffff;
+    --text-color: #222222;
+    --text-muted: #666666;
+    --link-blue: #0366d6;
+}
+
+body {
+    font-family: var(--font-main);
+    font-size: 15px;
+    /* 关键：将行高从 1.7 或 1.6 调低 */
+    line-height: 1.45; 
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    margin: 0;
+    padding: 0;
+    letter-spacing: -0.02em;
+}
+
+.bio-text p {
+    margin-top: 0;
+    margin-bottom: 12px; /* 压缩段落之间的距离，默认通常是 16px 或更多 */
+}
+
+.name-title {
+    font-size: 2.2rem;
+    margin: 40px 0 10px 0; /* 减少标题下方的留白 */
+    letter-spacing: -0.5px;
+}
+
+.links-section {
+    margin-top: 5px; /* 紧贴简介文字 */
+    padding-top: 5px;
+    border-top: 1px solid #eeeeee;
+}
+
+/* 专门针对首页的论文列表进行微调 */
+.home-publications h2 {
+    font-size: 1.3rem; /* 稍微调小一点标题 */
+    margin-top: 40px;  /* 简介与论文板块的间距 */
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.home-publications .pub-card {
+    padding: 12px 0; /* 减少每篇论文上下方的 padding (原先可能是 25px) */
+    border-bottom: 1px solid #f9f9f9;
+}
+
+.home-publications .pub-title {
+    font-size: 1.05rem; /* 首页标题略小一点 */
+    margin-bottom: 2px;
+}
+
+.home-publications .pub-authors, 
+.home-publications .pub-venue {
+    line-height: 1.3; /* 进一步收紧元数据行高 */
+}
+
+.container {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: 0 40px;
+}
+
+/* 导航栏：简洁横线 */
+nav {
+    padding: 40px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+.nav-links a {
+    margin-left: 30px;
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.nav-links a:hover {
+    color: var(--link-blue);
+}
+
+/* 首页标题 */
+.name-title {
+    font-size: 2.2rem;
+    margin: 40px 0 20px 0;
+    letter-spacing: -0.5px;
+}
+
+/* 论文列表：去掉绿色，使用严谨的蓝色标题 */
+.publication-list {
+    display: flex;
+    flex-direction: column;
+    margin-top: 30px;
+}
+
+.pub-card {
+    display: flex;
+    gap: 30px;
+    padding: 25px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.pub-thumbnail {
+    flex: 0 0 200px;
+}
+
+.pub-thumbnail img {
+    width: 100%;
+    border: 1px solid #eeeeee;
+}
+
+.pub-title {
+    margin: 0 0 6px 0;
+    font-size: 1.1rem;
+    color: var(--link-blue);
+    text-decoration: none;
+}
+
+.pub-authors {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+}
+
+.pub-venue {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.pub-abstract {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 12px 0;
+    line-height: 1.5;
+}
+
+/* 统一的条目容器样式 (Notes 和 Reading 共用逻辑) */
+.note-item-container {
+    border-left: 3px solid #eeeeee; /* 灰色的侧边装饰线 */
+    padding-left: 20px;            /* 留出间距 */
+    margin-bottom: 35px;           /* 条目之间的距离 */
+    transition: border-color 0.2s;
+}
+
+/* 鼠标悬停时侧边线变色，增加互动感但不过分 */
+.note-item-container:hover{
+    border-left: 3px solid var(--link-blue);
+}
+
+.note-item-title{
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.3;
+}
+
+.note-item-title a{
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.note-item-title a:hover {
+    color: var(--link-blue);
+}
+
+/* 元数据行样式 (日期、作者、分类等) */
+.note-item-meta{
+    font-size: 0.9em;
+    color: #666666;
+    margin-top: 4px;
+}
+
+.note-item-summary{
+    font-size: 0.88em;
+    margin-top: 8px;
+    color: #444444;
+    line-height: 1.5;
+    /* 限制摘要行数，保持整洁 */
+    display: -webkit-box;
+    /* -webkit-line-clamp: 2; */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 链接通用样式 */
+.links-section {
+    margin-top: 30px;
+    padding-top: 20px;
+}
+
+.links-section a {
+    margin-right: 20px;
+    text-decoration: none;
+    color: var(--link-blue);
+}
+
+footer {
+    margin-top: 80px;
+    padding: 40px 0;
+    font-size: 0.85em;
+    color: var(--text-muted);
+    border-top: 1px solid #eeeeee;
+}
