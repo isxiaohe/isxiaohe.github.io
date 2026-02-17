@@ -2,7 +2,7 @@
 title: "G4Splat: Geometry-Guided Gaussian Splatting with Generative Prior"
 date: 2025-10-14
 authors: "Junfeng Ni, Yixin Chen, **Zhifei Yang**, Yu Liu, Ruijie Lu, Song-Chun Zhu, Siyuan Huang+"
-venue: "arxiv"
+venue: "ICLR2026"
 paper: "https://arxiv.org/abs/2510.12099"
 code: "https://github.com/DaLi-Jack/G4Splat"
 image: "/images/g4splat.png"
