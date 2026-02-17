@@ -1,7 +1,7 @@
 ---
 title: "Home"
 ---
-I am an undergraduate student at **Peking University**, majoring in [Your Major, e.g., Computer Science]. 
+I am an undergraduate student at **Peking University**. 
 
 My research interests lie at the intersection of **Computer Vision**, **Character Animation**, and **Robotics**.
 
