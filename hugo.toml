@@ -16,6 +16,10 @@ title = 'Zhifei Yang'  # 你的名字
         url = "/publications/"
         weight = 1
     [[menu.main]]
+        name = "Paper Reading"
+        url = "/paper-reading/"
+        weight = 2
+    [[menu.main]]
         name = "Notes"
         url = "/notes/"
-        weight = 2
+        weight = 3

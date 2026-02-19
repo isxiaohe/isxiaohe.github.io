@@ -1,0 +1,21 @@
+{{ define "main" }}
+<h1>Paper Reading</h1>
+<div class="papers-list">
+    {{ $papers := readDir (path.Join "static" "paper-reading") }}
+    {{ range $papers }}
+        {{ if eq (path.Ext .Name) ".html" }}
+            {{ $title := replaceRE "\\.html$" "" .Name }}
+            {{ $title = title $title }}
+            {{ $title = replaceRE "[-_]+" " " $title }}
+            <div class="note-item-container">
+                <h3 class="note-item-title">
+                    <a href="/paper-reading/{{ .Name }}">{{ $title }}</a>
+                </h3>
+                <div class="note-item-meta">
+                    {{ .ModTime.Format "Jan 2, 2006" }}
+                </div>
+            </div>
+        {{ end }}
+    {{ end }}
+</div>
+{{ end }}

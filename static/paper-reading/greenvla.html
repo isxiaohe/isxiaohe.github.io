@@ -39,13 +39,14 @@
 
         .glass-nav {
             background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(0,0,0,0.05);
         }
 
         .bento-card {
             background: var(--apple-card);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255,255,255,0.4);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
@@ -116,16 +117,16 @@
                 <div class="grid md:grid-cols-2 gap-10">
                     <div>
                         <p class="mb-4 leading-relaxed text-gray-700">
-                            当前的机器人学习面临着 **"Generalization vs. Specialization"** 的两难困境。虽然 VLM 在语义层面展现了强大的泛化能力，但在真实的物理操作中，不同形态（Embodiments）的动力学差异巨大。
+                            当前的机器人学习面临着 <strong>&quot;Generalization vs. Specialization&quot;</strong> 的两难困境。虽然 VLM 在语义层面展现了强大的泛化能力，但在真实的物理操作中，不同形态（Embodiments）的动力学差异巨大。
                         </p>
                         <ul class="space-y-3">
                             <li class="flex items-start">
                                 <span class="bg-blue-100 text-blue-600 rounded-full p-1 mr-3 mt-1">✓</span>
-                                <span>**Data Heterogeneity**: 不同机器人采集的轨迹频率、观察视角不统一。</span>
+                                <span><strong>Data Heterogeneity</strong>: 不同机器人采集的轨迹频率、观察视角不统一。</span>
                             </li>
                             <li class="flex items-start">
                                 <span class="bg-blue-100 text-blue-600 rounded-full p-1 mr-3 mt-1">✓</span>
-                                <span>**Action Space Mismatch**: 从单一机械臂到双臂人形机器人，自由度的急剧增加。</span>
+                                <span><strong>Action Space Mismatch</strong>: 从单一机械臂到双臂人形机器人，自由度的急剧增加。</span>
                             </li>
                         </ul>
                     </div>
@@ -318,22 +319,22 @@
                 <div class="bento-card rounded-3xl p-8 border-l-8 border-green-500">
                     <h4 class="font-bold text-green-700 mb-3">Pros: 显著优势</h4>
                     <ul class="text-sm space-y-2 text-gray-700">
-                        <li>• **系统性创新**：分阶段学习路径解决了大模型知识到机器人动作的“跨度过大”问题。</li>
-                        <li>• **真实部署验证**：在复杂的人形机器人双臂操作上证明了极高的稳定性。</li>
-                        <li>• **数据治理严密**：DATAQA 的引入确保了微调数据的长时程一致性。</li>
+                        <li>• <strong>系统性创新</strong>：分阶段学习路径解决了大模型知识到机器人动作的“跨度过大”问题。</li>
+                        <li>• <strong>真实部署验证</strong>：在复杂的人形机器人双臂操作上证明了极高的稳定性。</li>
+                        <li>• <strong>数据治理严密</strong>：DATAQA 的引入确保了微调数据的长时程一致性。</li>
                     </ul>
                 </div>
                 <div class="bento-card rounded-3xl p-8 border-l-8 border-red-500">
                     <h4 class="font-bold text-red-700 mb-3">Cons: 局限性</h4>
                     <ul class="text-sm space-y-2 text-gray-700">
-                        <li>• **计算开销**：多阶段的流水线虽然效果好，但推理延迟在低算力边缘端仍具挑战。</li>
-                        <li>• **泛化边界**：对于非刚性、具有极高流体特性的物体，零样本表现仍有待加强。</li>
+                        <li>• <strong>计算开销</strong>：多阶段的流水线虽然效果好，但推理延迟在低算力边缘端仍具挑战。</li>
+                        <li>• <strong>泛化边界</strong>：对于非刚性、具有极高流体特性的物体，零样本表现仍有待加强。</li>
                     </ul>
                 </div>
             </div>
             <div class="mt-6 bento-card rounded-3xl p-8">
                 <h4 class="font-bold mb-2">Future Directions</h4>
-                <p class="text-sm text-gray-600">未来的研究应更关注 **World Model** 的集成，使机器人具备预测物体因物理交互产生形变的能力，以及进一步降低推理侧的 Action Token 序列长度。</p>
+                <p class="text-sm text-gray-600">未来的研究应更关注 <strong>World Model</strong> 的集成，使机器人具备预测物体因物理交互产生形变的能力，以及进一步降低推理侧的 Action Token 序列长度。</p>
             </div>
         </section>
 
@@ -345,7 +346,7 @@
                 </div>
                 <h2 class="text-4xl font-bold mb-6 tracking-tight">One More Thing</h2>
                 <p class="text-lg opacity-80 leading-relaxed max-w-2xl mb-8">
-                    研究团队发现了一个有趣的 **"Embodiment Synergy"（机体协同）** 效应：虽然不同机器人的动作幅度不同，但它们在注意力图（Attention Map）中对关键特征的关注具有高度一致性。这意味着 VLA 的“大脑”部分是可以完全解耦并跨平台共享的，这为未来构建“通用机器人操作系统”奠定了坚实基础。
+                    研究团队发现了一个有趣的 <strong>&quot;Embodiment Synergy&quot;（机体协同）</strong> 效应：虽然不同机器人的动作幅度不同，但它们在注意力图（Attention Map）中对关键特征的关注具有高度一致性。这意味着 VLA 的“大脑”部分是可以完全解耦并跨平台共享的，这为未来构建“通用机器人操作系统”奠定了坚实基础。
                 </p>
                 <div class="flex items-center space-x-4">
                     <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold">G</div>
