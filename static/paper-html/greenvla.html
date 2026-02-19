@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green-VLA: Staged Vision-Language-Action Model</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax 3.x -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']],
+                processEscapes: true
+            },
+            options: {
+                renderActions: {
+                    addMenu: []
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --apple-bg: #f5f5f7;
+            --apple-card: rgba(255, 255, 255, 0.8);
+            --apple-accent: #0071e3;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--apple-bg);
+            color: #1d1d1f;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .bento-card {
+            background: var(--apple-card);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.4s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.4s ease;
+        }
+        .bento-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.05);
+        }
+        .math-block {
+            background: #ffffff;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+        .code-block {
+            background: #1c1c1e;
+            color: #f5f5f7;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s cubic-bezier(0.2, 0, 0, 1);
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(0, 113, 227, 0.1);
+            color: var(--apple-accent);
+        }
+    </style>
+</head>
+<body class="selection:bg-blue-100">
+
+    <!-- Navigation -->
+    <nav class="glass-nav fixed top-0 w-full z-50">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-xl font-bold tracking-tight">Green-VLA</span>
+                <span class="text-xs bg-black text-white px-2 py-0.5 rounded">RESEARCH</span>
+            </div>
+            <div class="hidden md:flex gap-8 text-sm font-medium">
+                <a href="#motivation" class="hover:text-blue-600 transition-colors">背景</a>
+                <a href="#math" class="hover:text-blue-600 transition-colors">建模</a>
+                <a href="#method" class="hover:text-blue-600 transition-colors">方法</a>
+                <a href="#results" class="hover:text-blue-600 transition-colors">结果</a>
+                <a href="#review" class="hover:text-blue-600 transition-colors">评价</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-32 pb-20 px-6 max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-24 fade-in">
+            <h1 class="text-5xl md:text-7xl font-bold tracking-tight mb-6">
+                通用机器人的分阶段<br/><span class="text-blue-600 italic">视觉-语言-动作</span> 范式
+            </h1>
+            <p class="text-xl text-gray-500 max-w-3xl mx-auto leading-relaxed">
+                Green-VLA 通过五阶段递进式学习，构建了从语义基础到物理交互的桥梁，实现了跨机体、长时程的任务泛化。
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <span class="badge">arXiv:2602.00919</span>
+                <span class="badge">Sber Robotics Center</span>
+            </div>
+        </header>
+
+        <!-- 1. Research Motivation -->
+        <section id="motivation" class="mb-24 fade-in">
+            <div class="flex flex-col md:flex-row gap-12 items-center">
+                <div class="flex-1">
+                    <h2 class="text-3xl font-bold mb-6 tracking-tight">01. Research Motivation</h2>
+                    <p class="text-lg leading-relaxed text-gray-600 mb-6">
+                        传统的机器人控制模型往往面临“语义-物理”断层。VLM 虽然具备极强的语义推理能力，但在面对多样化的机器人机体（Embodiments）和真实世界的物理精细操作时，往往表现出数据效率低下和泛化性差的问题。
+                    </p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0"></div>
+                            <span class="text-gray-700"><strong>泛化瓶颈：</strong> 现有方法难以在不同运动学结构（单臂 vs 双臂）之间共享交互知识。</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0"></div>
+                            <span class="text-gray-700"><strong>长程对齐：</strong> Behavior Cloning 在长时程任务中由于累积误差难以维持鲁棒性。</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="flex-1 bento-card rounded-3xl p-8 bg-gradient-to-br from-blue-50 to-white border-blue-100">
+                    <div class="text-sm font-bold text-blue-600 mb-2 uppercase tracking-widest">Core Insight</div>
+                    <div class="text-2xl font-semibold leading-snug">
+                        “技能的习得应如同人类成长：从理解语言、认知物体，到掌握通用操纵，最后精准适配特定机体。”
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. Mathematical Modeling -->
+        <section id="math" class="mb-24 fade-in">
+            <h2 class="text-3xl font-bold mb-10 tracking-tight">02. Mathematical Modeling & Algorithms</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- 符号定义 -->
+                <div class="bento-card rounded-3xl p-8">
+                    <h3 class="text-xl font-bold mb-6">符号定义表</h3>
+                    <div class="overflow-hidden">
+                        <table class="w-full text-sm text-left">
+                            <thead>
+                                <tr class="border-b border-gray-100">
+                                    <th class="pb-3 font-semibold text-gray-500">符号</th>
+                                    <th class="pb-3 font-semibold text-gray-500">学术含义</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-50">
+                                <tr><td class="py-3 font-mono text-blue-600">$ \mathcal{O}_t $</td><td class="py-3">当前时刻的视觉观测（RGB images）</td></tr>
+                                <tr><td class="py-3 font-mono text-blue-600">$ \mathcal{L} $</td><td class="py-3">任务的语言指令文本（Goal embedding）</td></tr>
+                                <tr><td class="py-3 font-mono text-blue-600">$ \mathcal{A}_t $</td><td class="py-3">动作序列 $ \{a_{t}, a_{t+1}, \dots, a_{t+k}\} $</td></tr>
+                                <tr><td class="py-3 font-mono text-blue-600">$ \mathcal{E} $</td><td class="py-3">机体感知特征（Embodiment-aware embedding）</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 理论推导 -->
+                <div class="bento-card rounded-3xl p-8 bg-white">
+                    <h3 class="text-xl font-bold mb-4">目标函数定义</h3>
+                    <p class="text-sm text-gray-500 mb-4">Green-VLA 采用条件生成模型模拟动作分布，其目标是最大化多步预测的 log 似然：</p>
+                    <div class="math-block">
+                        $$ \mathcal{J}(\theta) = \mathbb{E}_{(\mathcal{O}, \mathcal{L}, \mathcal{A}) \sim \mathcal{D}} \left[ \sum_{i=0}^{k} \log P(a_{t+i} | \mathcal{O}_{\le t}, \mathcal{L}, \mathcal{E}; \theta) \right] $$
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2 italic">* 其中 $ \mathcal{E} $ 包含了机器人自由度（DoF）和控制频率等元数据。</p>
+                </div>
+            </div>
+
+            <!-- 算法实现 -->
+            <div class="mt-8 bento-card rounded-3xl p-8">
+                <h3 class="text-xl font-bold mb-6">Algorithm: Stage-Aware Policy Execution</h3>
+                <div class="code-block overflow-x-auto">
+<pre><code>def execute_policy(observation, instruction, embodiment_info):
+    # 1. 对观测图像进行动态分词与对齐
+    visual_features = vision_encoder(observation)
+    
+    # 2. 注入机体感知元数据，确保跨机体适配 (Cross-Embodiment)
+    context = combine(visual_features, instruction, embodiment_info)
+    
+    # 3. 预测动作 Chunk
+    action_chunk = vla_transformer_decoder(context)
+    
+    # 4. 根据当前 Episode Progress 动态调整控制权重
+    progress = progress_predictor(context)
+    if progress > 0.95:
+        trigger_termination()
+    
+    return action_chunk</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Methodology Bento Grid -->
+        <section id="method" class="mb-24 fade-in">
+            <h2 class="text-3xl font-bold mb-10 tracking-tight">03. Reproducible Methodology</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- DataQA -->
+                <div class="md:col-span-2 bento-card rounded-3xl p-8">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-green-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold">DATAQA 数据治理流水线</h3>
+                    </div>
+                    <p class="text-gray-600 mb-6">
+                        为了处理 3,000 小时的异构演示数据，Green-VLA 引入了 DATAQA 机制，通过时空对齐过滤器剔除不连续及语义缺失的轨迹，确保训练数据的信噪比。
+                    </p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-50 p-4 rounded-2xl">
+                            <span class="block text-blue-600 font-bold text-2xl">3K+</span>
+                            <span class="text-xs text-gray-400 uppercase">Hours of Demo Data</span>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-2xl">
+                            <span class="block text-blue-600 font-bold text-2xl">100Hz</span>
+                            <span class="text-xs text-gray-400 uppercase">Control Precision</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Embodiment Interface -->
+                <div class="bento-card rounded-3xl p-8 bg-black text-white">
+                    <h3 class="text-xl font-bold mb-4">统一动作接口</h3>
+                    <p class="text-sm text-gray-400 leading-relaxed">
+                        采用 Normalize 后的位置空间与姿态四元数，通过增加掩码向量支持从 7-DoF 到 14-DoF（双臂人形机器人）的无缝切换。
+                    </p>
+                    <div class="mt-6 border-t border-gray-800 pt-6">
+                        <div class="flex justify-between text-xs mb-2">
+                            <span>Mobile Manipulator</span>
+                            <span class="text-green-400">Supported</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span>Humanoid (Green Robot)</span>
+                            <span class="text-green-400">Targeted</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. Results -->
+        <section id="results" class="mb-24 fade-in">
+            <h2 class="text-3xl font-bold mb-10 tracking-tight">04. Results & Insights</h2>
+            <div class="bento-card rounded-3xl overflow-hidden">
+                <div class="p-8 border-b border-gray-100">
+                    <h3 class="text-xl font-bold">实验性能对比 (Success Rate %)</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-8 py-4 font-semibold">任务类型 / 模型</th>
+                                <th class="px-8 py-4 font-semibold">RT-2 (Baseline)</th>
+                                <th class="px-8 py-4 font-semibold">OpenVLA</th>
+                                <th class="px-8 py-4 font-semibold text-blue-600">Green-VLA (Ours)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <tr>
+                                <td class="px-8 py-4 font-medium">物体抓取 (Unseen)</td>
+                                <td class="px-8 py-4">64.2%</td>
+                                <td class="px-8 py-4">71.5%</td>
+                                <td class="px-8 py-4 font-bold text-green-600">88.4%</td>
+                            </tr>
+                            <tr>
+                                <td class="px-8 py-4 font-medium">长时程组合任务</td>
+                                <td class="px-8 py-4">32.0%</td>
+                                <td class="px-8 py-4">45.8%</td>
+                                <td class="px-8 py-4 font-bold text-green-600">76.2%</td>
+                            </tr>
+                            <tr>
+                                <td class="px-8 py-4 font-medium">跨机体零样本迁移</td>
+                                <td class="px-8 py-4">12.5%</td>
+                                <td class="px-8 py-4">28.0%</td>
+                                <td class="px-8 py-4 font-bold text-green-600">54.9%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="p-6 bg-white rounded-2xl border border-gray-100">
+                    <h4 class="font-bold mb-2">物理直觉分析</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        通过阶段性的 R1 (Adaptation) 和 R2 (RL Alignment)，模型成功习得了闭环反馈能力。当环境受到外部扰动（如物体被移走）时，Green-VLA 能立即重规划动作路径，而非盲目执行预存轨迹。
+                    </p>
+                </div>
+                <div class="p-6 bg-white rounded-2xl border border-gray-100">
+                    <h4 class="font-bold mb-2">语义泛化</h4>
+                    <p class="text-sm text-gray-600 leading-relaxed">
+                        基于 L0/L1 阶段的 VLM 预训练，Green-VLA 在面对模棱两可的指令（如“帮我清理桌子”）时，表现出极强的任务分解能力，优于纯策略网络模型。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. Critical Review -->
+        <section id="review" class="mb-24 fade-in">
+            <h2 class="text-3xl font-bold mb-10 tracking-tight text-center">05. Area Chair's Critical Review</h2>
+            <div class="flex flex-col md:flex-row gap-8">
+                <div class="flex-1 p-8 bg-green-50 rounded-3xl border border-green-100">
+                    <h3 class="text-green-800 font-bold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path></svg>
+                        亮点 (Pros)
+                    </h3>
+                    <ul class="text-sm text-green-900 space-y-3">
+                        <li><strong>全栈工程性：</strong> 论文不仅关注算法，还提供了完整的数据处理、对齐和控制系统栈，对真实落地极具参考价值。</li>
+                        <li><strong>五阶段范式：</strong> 这种分层递进的训练逻辑极好地平衡了通用语义与特定机体控制。</li>
+                        <li><strong>OOD 检测：</strong> 增加了分布外检测模块，极大提升了机器人在非实验室环境下的安全性。</li>
+                    </ul>
+                </div>
+                <div class="flex-1 p-8 bg-red-50 rounded-3xl border border-red-100">
+                    <h3 class="text-red-800 font-bold mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"></path></svg>
+                        不足与展望 (Cons & Future)
+                    </h3>
+                    <ul class="text-sm text-red-900 space-y-3">
+                        <li><strong>计算开销：</strong> 分阶段训练虽然效果好，但其所需的总算力和多轮数据回传对资源有限的团队构成挑战。</li>
+                        <li><strong>实时延时：</strong> 在 14-DoF 复杂控制下，VLA Transformer 的实时推理时延仍有待进一步压测优化。</li>
+                        <li><strong>方向：</strong> 未来可探索更加端到端的动态机体适配，减少手动配置 DoF 掩码的需求。</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. One More Thing -->
+        <section class="fade-in">
+            <div class="relative overflow-hidden bg-blue-600 rounded-3xl p-12 text-white">
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-bold mb-4">One More Thing</h2>
+                    <p class="text-xl text-blue-100 mb-8 max-w-2xl leading-relaxed">
+                        论文中一个常被忽视的细节是：Green-VLA 的 RL 训练不仅是为了提高成功率，其更核心的目的是<strong>降低动作执行的“抖动（Jitter）”</strong>。通过在奖励函数中引入关节加速度项，Green-VLA 让机器人的动作看起来更加流畅、拟人化，这种“优雅感”在人机协作场景下至关重要。
+                    </p>
+                    <div class="inline-block bg-white text-blue-600 px-6 py-3 rounded-full font-bold shadow-xl">
+                        探索更多细节 &rarr;
+                    </div>
+                </div>
+                <!-- Abstract Decor -->
+                <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-500 rounded-full opacity-20 blur-3xl"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-12 border-t border-gray-200 text-center text-gray-400 text-sm">
+        <p>&copy; 2026 AI Insight Journal. Designed following Apple HIG.</p>
+    </footer>
+
+    <script>
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
