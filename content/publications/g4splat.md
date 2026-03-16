@@ -10,5 +10,5 @@ image: "/images/g4splat.png"
 selected: true
 equal_contrib: true
 corresponding: true
-abstract: "Despite recent advances in leveraging generative prior from pre-trained diffusion models for 3D scene reconstruction, existing methods still face two critical limitations. First, due to the lack of reliable geometric supervision, they struggle to produce high-quality reconstructions even in observed regions, let alone in unobserved areas. Second, they lack effective mechanisms to mitigate multiview inconsistencies in the generated images, leading to severe shape–appearance ambiguities and degraded scene geometry."
+tldr: "Leveraging planar geometry and generative priors for high-quality 3D scene reconstruction, even in unobserved regions."
 ---
