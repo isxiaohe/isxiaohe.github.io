@@ -1,6 +1,12 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
 title = 'Zhifei Yang'
+ignoreLogs = ['warning-goldmark-raw-html']
+
+[markup]
+    [markup.goldmark]
+        [markup.goldmark.renderer]
+            unsafe = true
 
 [params]
     author = "Zhifei Yang"
