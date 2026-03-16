@@ -1,5 +1,8 @@
 {{ define "main" }}
-<h1>Research & Study Notes</h1>
+<h1>Notes</h1>
+<p class="notes-intro">
+    Here I share my study notes on mathematics, computer vision, and related topics.
+</p>
 <div class="notes-list">
     {{ range .Pages.ByDate.Reverse }}
     <div class="note-item-container">
@@ -7,7 +10,7 @@
             <a href="{{ .Permalink }}">{{ .Title }}</a>
         </h3>
         <div class="note-item-meta">
-            {{ .Date.Format "Jan 2, 2006" }} 
+            {{ .Date.Format "Jan 2, 2006" }}
             {{ if .Params.tags }}
             | {{ range $index, $tag := .Params.tags }}{{ if $index }}, {{ end }}{{ $tag }}{{ end }}
             {{ end }}
