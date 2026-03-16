@@ -1,6 +1,6 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-us'
-title = 'Zhifei Yang'  # 你的名字
+title = 'Zhifei Yang'
 
 [params]
     author = "Zhifei Yang"
@@ -8,18 +8,4 @@ title = 'Zhifei Yang'  # 你的名字
     email = "zhifei.yeung@gmail.com"
     github = "https://github.com/isxiaohe"
     cv_url = "/cv.pdf"
-    # scholar = "https://scholar.google.com/..."
-
-[menu]
-    [[menu.main]]
-        name = "Publications"
-        url = "/publications/"
-        weight = 1
-    [[menu.main]]
-        name = "Paper Reading"
-        url = "/paper-reading/"
-        weight = 2
-    [[menu.main]]
-        name = "Notes"
-        url = "/notes/"
-        weight = 3
+    scholar = "https://scholar.google.com/citations?user=YOUR_ID"
