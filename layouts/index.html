@@ -1,48 +1,111 @@
 {{ define "main" }}
-<div class="home-container">
-    <!-- 1. 个人简介部分 -->
-    <section class="bio">
-        <!-- <h1 class="name-title">{{ .Site.Title }}</h1> -->
-        <h2>I'm Zhifei Yang</h2>
-        <div class="bio-text">
-            {{ .Content }}
-        </div>
+<table style="width:100%;max-width:800px;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+<tbody>
+    <!-- Header: Bio + Photo -->
+    <tr style="padding:0px">
+        <td style="padding:0px">
+            <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+            <tbody>
+                <tr style="padding:0px">
+                    <!-- Bio section (63%) -->
+                    <td style="padding:2.5%;width:63%;vertical-align:middle">
+                        <p class="name" style="text-align: center;">
+                            {{ .Site.Title }}
+                        </p>
+                        <p>
+                            {{ .Content }}
+                        </p>
+                        <p style="text-align:center">
+                            <a href="mailto:{{ .Site.Params.email }}">Email</a> &nbsp;/&nbsp;
+                            <a href="{{ .Site.Params.cv_url }}">CV</a> &nbsp;/&nbsp;
+                            {{ with .Site.Params.scholar }}<a href="{{ . }}">Scholar</a> &nbsp;/&nbsp;{{ end }}
+                            <a href="{{ .Site.Params.github }}">GitHub</a> &nbsp;/&nbsp;
+                            <a href="/notes/">Notes</a> &nbsp;/&nbsp;
+                            <a href="/paper-reading/">Paper Reading</a>
+                        </p>
+                    </td>
+                    <!-- Photo section (37%) -->
+                    <td style="padding:2.5%;width:37%;max-width:37%">
+                        <div class="profile-photo">ZY</div>
+                    </td>
+                </tr>
+            </tbody>
+            </table>
 
-        <div class="links-section"></div>
-            <a href="mailto:{{ .Site.Params.email }}">Email</a>
-            <a href="{{ .Site.Params.cv_url }}">CV (PDF)</a>
-            <a href="{{ .Site.Params.scholar }}">Scholar</a>
-            <a href="{{ .Site.Params.github }}">GitHub</a>
-        </div>
-    </section>
+            <!-- Research section -->
+            <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+            <tbody>
+                <tr>
+                    <td style="padding:16px;width:100%;vertical-align:middle">
+                        <h2>Research</h2>
+                        <p>
+                            I'm interested in computer vision, 3D reconstruction, and generative AI.
+                        </p>
+                    </td>
+                </tr>
+            </tbody>
+            </table>
 
-    <!-- 2. 精选论文部分 -->
-    <section class="home-publications" style="margin-top: 60px;">
-        <h2 style="border-bottom: 1px solid #eee; padding-bottom: 10px;">Publications</h2>
-        
-        <div class="publication-list">
-            <!-- 逻辑：获取 publications 目录下，按日期倒序排列的前 3 篇 -->
-            {{ $pubs := where (where .Site.RegularPages "Section" "publications") "Params.selected" "==" true }}
-            {{ range $pubs.ByDate.Reverse }}
-            <div class="pub-card" style="padding: 20px 0;">
-                <div class="pub-info">
-                    <h3 class="pub-title" style="font-size: 1.1rem;">
-                        <a href="{{ .Permalink }}" style="text-decoration: none; color: var(--link-blue);">{{ .Title }}</a>
-                    </h3>
-                    <div class="pub-authors" style="font-size: 0.9rem;">{{ .Params.authors | markdownify }}</div>
-                    <div class="pub-venue" style="font-size: 0.9rem; color: #666;">{{ .Params.venue }}, {{ .Date.Format "2006" }}</div>
-                    <div class="pub-links" style="font-size: 0.85rem; margin-top: 8px;">
-                        {{ if .Params.paper }}<a href="{{ .Params.paper }}">[Paper]</a>{{ end }}
-                        {{ if .Params.code }}<a href="{{ .Params.code }}">[Code]</a>{{ end }}
-                    </div>
-                </div>
-            </div>
-            {{ end }}
-        </div>
-
-        <!-- <div style="margin-top: 20px;">
-            <a href="/publications/" style="font-size: 0.9rem; font-weight: 600;">View All Publications →</a>
-        </div> -->
-    </section>
-</div>
+            <!-- Publications -->
+            <table style="width:100%;border:0px;border-spacing:0px 10px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+            <tbody>
+                {{ $pubs := where .Site.RegularPages "Section" "publications" }}
+                {{ range $pubs.ByDate.Reverse }}
+                <tr onmouseout="{{ .File.BaseFileName }}_stop()" onmouseover="{{ .File.BaseFileName }}_start()" {{ if .Params.selected }}bgcolor="#ffffd0"{{ end }}>
+                    <td style="padding:16px;width:20%;vertical-align:middle">
+                        <div class="one">
+                            {{ if .Params.hover_image }}
+                            <div class="two" id='{{ .File.BaseFileName }}_image'>
+                                <img src='{{ .Params.hover_image }}' width=100%>
+                            </div>
+                            {{ end }}
+                            {{ if .Params.image }}
+                            <img src='{{ .Params.image }}' width="160">
+                            {{ else }}
+                            <div style="width:160px;height:107px;background:#eee;"></div>
+                            {{ end }}
+                        </div>
+                        {{ if .Params.hover_image }}
+                        <script type="text/javascript">
+                            function {{ .File.BaseFileName }}_start() {
+                                document.getElementById('{{ .File.BaseFileName }}_image').style.opacity = "1";
+                            }
+                            function {{ .File.BaseFileName }}_stop() {
+                                document.getElementById('{{ .File.BaseFileName }}_image').style.opacity = "0";
+                            }
+                            {{ .File.BaseFileName }}_stop()
+                        </script>
+                        {{ end }}
+                    </td>
+                    <td style="padding:20px;width:80%;vertical-align:middle">
+                        <a href="{{ .Permalink }}">
+                            <span class="papertitle">{{ .Title }}</span>
+                        </a>
+                        <br>
+                        {{ .Params.authors | markdownify }}
+                        <br>
+                        <em>{{ .Params.venue }}</em>, {{ .Date.Format "2006" }}
+                        <br>
+                        {{ if .Params.paper }}<a href="{{ .Params.paper }}">paper</a>{{ end }}
+                        {{ if and .Params.paper .Params.code }} / {{ end }}
+                        {{ if .Params.code }}<a href="{{ .Params.code }}">code</a>{{ end }}
+                        {{ if .Params.abstract }}
+                        <p>{{ .Params.abstract | truncate 200 }}</p>
+                        {{ end }}
+                        {{ if or .Params.equal_contrib .Params.corresponding }}
+                        <p style="font-size:13px;color:#666;font-style:italic;">
+                            {{ if .Params.equal_contrib }}<sup>*</sup>Equal contribution{{ end }}
+                            {{ if and .Params.equal_contrib .Params.corresponding }}&nbsp;&nbsp;{{ end }}
+                            {{ if .Params.corresponding }}<sup>✉</sup>Corresponding author{{ end }}
+                        </p>
+                        {{ end }}
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+            </table>
+        </td>
+    </tr>
+</tbody>
+</table>
 {{ end }}
