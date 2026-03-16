@@ -39,9 +39,9 @@ Transfer the current Hugo-based academic website to match Jon Barron's academic 
 - **Layout:** Thumbnail on left, paper info on right
 
 ### Navigation
-- **Top navigation bar** with site name on left
-- **Links:** Notes, Paper Reading
-- **No navigation on pure homepage sections** (bio, research intro)
+- **No top navigation bar** - pure Jon Barron style single-page feel
+- **All links in bio section:** Email / CV / Scholar / GitHub / Notes / Paper Reading
+- Centered horizontal link bar below bio text
 
 ### Author Symbols
 - **Equal contribution:** Asterisk (*)
@@ -51,20 +51,20 @@ Transfer the current Hugo-based academic website to match Jon Barron's academic 
 ## Site Structure
 
 ### Homepage (`/`)
-1. Header section with name, bio, links, and placeholder photo
+1. Header section with name, bio, all links (including Notes & Paper Reading), and placeholder photo
 2. Research interests section
 3. All publications with thumbnails and hover effects
 
 ### Sub-pages
-- `/notes/` - Keep existing notes page
-- `/paper-reading/` - Keep existing paper reading page
+- `/notes/` - Notes page with introductory text: "Here I share my study notes on mathematics, computer vision, and related topics."
+- `/paper-reading/` - Paper reading page
 
 ## Files to Modify
 
 ### Layouts
 - `layouts/index.html` - Complete rewrite for Jon Barron style homepage
-- `layouts/_default/baseof.html` - Update base template with Lato font, navigation
-- `layouts/partials/nav.html` - Simplify navigation
+- `layouts/_default/baseof.html` - Update base template with Lato font, remove navigation
+- `layouts/notes/list.html` - Add introductory text for notes section
 
 ### Styles
 - `static/css/style.css` - Complete rewrite:
@@ -107,8 +107,9 @@ corresponding: [3]  # Indices of corresponding authors
 1. Keep Hugo as the static site generator (don't switch to plain HTML)
 2. Use Hugo templates to generate the Jon Barron-style HTML
 3. Publication thumbnails will use CSS hover effects (opacity transition)
-4. Navigation will be minimal - only show on pages that need it
+4. No navigation bar - all links (Email, CV, Scholar, GitHub, Notes, Paper Reading) in bio section
 5. Maintain existing content structure for Notes and Paper Reading
+6. Add intro text on Notes page to introduce viewers to the content
 
 ## Example Publication Card HTML
 
