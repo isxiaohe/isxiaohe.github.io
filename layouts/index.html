@@ -51,12 +51,13 @@
             <tbody>
                 {{ $pubs := where .Site.RegularPages "Section" "publications" }}
                 {{ range $pubs.ByDate.Reverse }}
-                <tr onmouseout="{{ .File.BaseFileName }}_stop()" onmouseover="{{ .File.BaseFileName }}_start()" {{ if .Params.selected }}bgcolor="#ffffd0"{{ end }}>
+                {{ $id := .File.BaseFileName }}
+                <tr {{ if .Params.selected }}bgcolor="#ffffd0"{{ end }}>
                     <td style="padding:16px;width:20%;vertical-align:middle">
                         <div class="one">
                             {{ if .Params.hover_image }}
-                            <div class="two" id='{{ .File.BaseFileName }}_image'>
-                                <img src='{{ .Params.hover_image }}' width=100%>
+                            <div class="two" id='{{ $id }}_image'>
+                                <img src='{{ .Params.hover_image }}' width="100%">
                             </div>
                             {{ end }}
                             {{ if .Params.image }}
@@ -65,17 +66,6 @@
                             <div style="width:160px;height:107px;background:#eee;"></div>
                             {{ end }}
                         </div>
-                        {{ if .Params.hover_image }}
-                        <script type="text/javascript">
-                            function {{ .File.BaseFileName }}_start() {
-                                document.getElementById('{{ .File.BaseFileName }}_image').style.opacity = "1";
-                            }
-                            function {{ .File.BaseFileName }}_stop() {
-                                document.getElementById('{{ .File.BaseFileName }}_image').style.opacity = "0";
-                            }
-                            {{ .File.BaseFileName }}_stop()
-                        </script>
-                        {{ end }}
                     </td>
                     <td style="padding:20px;width:80%;vertical-align:middle">
                         <a href="{{ .Permalink }}">
