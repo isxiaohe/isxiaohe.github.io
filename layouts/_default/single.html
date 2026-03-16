@@ -1,7 +1,23 @@
 {{ define "main" }}
-<h1>{{ .Title }}</h1>
-<!-- <p class="meta">{{ .Date.Format "January 2, 2026" }}</p> -->
-<div class="content">
-    {{ .Content }}
-</div>
+<table style="width:100%;max-width:800px;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+<tbody>
+    <tr>
+        <td style="padding:20px;">
+            <h2>{{ .Title }}</h2>
+            {{ if not .Date.IsZero }}
+            <p style="font-size:14px;color:#666666;margin-bottom:20px;">
+                {{ .Date.Format "January 2, 2006" }}
+            </p>
+            {{ end }}
+            <div style="line-height:1.6;">
+                {{ .Content }}
+            </div>
+
+            <p style="margin-top:30px;">
+                <a href="/" style="color:#1772d0;">← Back to home</a>
+            </p>
+        </td>
+    </tr>
+</tbody>
+</table>
 {{ end }}

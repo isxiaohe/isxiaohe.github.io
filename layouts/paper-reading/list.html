@@ -1,21 +1,40 @@
 {{ define "main" }}
-<h1>Paper Reading</h1>
-<div class="papers-list">
-    {{ $papers := readDir (path.Join "static" "paper-reading") }}
-    {{ range $papers }}
-        {{ if eq (path.Ext .Name) ".html" }}
-            {{ $title := replaceRE "\\.html$" "" .Name }}
-            {{ $title = title $title }}
-            {{ $title = replaceRE "[-_]+" " " $title }}
-            <div class="note-item-container">
-                <h3 class="note-item-title">
-                    <a href="/paper-reading/{{ .Name }}">{{ $title }}</a>
-                </h3>
-                <div class="note-item-meta">
-                    {{ .ModTime.Format "Jan 2, 2006" }}
-                </div>
-            </div>
-        {{ end }}
-    {{ end }}
-</div>
+<table style="width:100%;max-width:800px;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+<tbody>
+    <tr>
+        <td style="padding:20px;">
+            <h2>Paper Reading</h2>
+            <p style="color:#666666;margin-bottom:30px;">
+                Notes and summaries of papers I've read.
+            </p>
+
+            <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;">
+            <tbody>
+                {{ $papers := readDir (path.Join "static" "paper-reading") }}
+                {{ range $papers }}
+                    {{ if eq (path.Ext .Name) ".html" }}
+                        {{ $title := replaceRE "\\.html$" "" .Name }}
+                        {{ $title = title $title }}
+                        {{ $title = replaceRE "[-_]+" " " $title }}
+                        <tr>
+                            <td style="padding:16px 0;border-bottom:1px solid #eeeeee;vertical-align:top;">
+                                <a href="/paper-reading/{{ .Name }}" style="color:#1772d0;font-weight:700;">{{ $title }}</a>
+                                <br>
+                                <span style="font-size:14px;color:#666666;">
+                                    {{ .ModTime.Format "Jan 2, 2006" }}
+                                </span>
+                            </td>
+                        </tr>
+                    {{ end }}
+                {{ end }}
+            </tbody>
+            </table>
+
+            <p style="margin-top:30px;">
+                <a href="/" style="color:#1772d0;">← Back to home</a>
+            </p>
+        </td>
+    </tr>
+</tbody>
+</table>
 {{ end }}

@@ -1,26 +1,40 @@
 {{ define "main" }}
-<h1>Notes</h1>
-<p class="notes-intro">
-    Here I share my study notes on mathematics, computer vision, and related topics.
-</p>
-<div class="notes-list">
-    {{ range .Pages.ByDate.Reverse }}
-    <div class="note-item-container">
-        <h3 class="note-item-title">
-            <a href="{{ .Permalink }}">{{ .Title }}</a>
-        </h3>
-        <div class="note-item-meta">
-            {{ .Date.Format "Jan 2, 2006" }}
-            {{ if .Params.tags }}
-            | {{ range $index, $tag := .Params.tags }}{{ if $index }}, {{ end }}{{ $tag }}{{ end }}
-            {{ end }}
-        </div>
-        {{ if .Params.tldr }}
-        <p class="note-item-summary">{{ .Params.tldr }}</p>
-        {{ else }}
-        <p class="note-item-summary">{{ .Summary | truncate 200 }}</p>
-        {{ end }}
-    </div>
-    {{ end }}
-</div>
+<table style="width:100%;max-width:800px;border:0px;border-spacing:0px;border-collapse:separate;margin-right:auto;margin-left:auto;">
+<tbody>
+    <tr>
+        <td style="padding:20px;">
+            <h2>Notes</h2>
+            <p style="color:#666666;margin-bottom:30px;">
+                Here I share my study notes on mathematics, computer vision, and related topics.
+            </p>
+
+            <table style="width:100%;border:0px;border-spacing:0px;border-collapse:separate;">
+            <tbody>
+                {{ range .Pages.ByDate.Reverse }}
+                <tr>
+                    <td style="padding:16px 0;border-bottom:1px solid #eeeeee;vertical-align:top;">
+                        <a href="{{ .Permalink }}" style="color:#1772d0;font-weight:700;">{{ .Title }}</a>
+                        <br>
+                        <span style="font-size:14px;color:#666666;">
+                            {{ .Date.Format "Jan 2, 2006" }}
+                            {{ if .Params.tags }}
+                            &nbsp;|&nbsp; {{ range $index, $tag := .Params.tags }}{{ if $index }}, {{ end }}{{ $tag }}{{ end }}
+                            {{ end }}
+                        </span>
+                        {{ if .Params.tldr }}
+                        <p style="font-size:14px;color:#444444;margin-top:8px;">{{ .Params.tldr }}</p>
+                        {{ end }}
+                    </td>
+                </tr>
+                {{ end }}
+            </tbody>
+            </table>
+
+            <p style="margin-top:30px;">
+                <a href="/" style="color:#1772d0;">← Back to home</a>
+            </p>
+        </td>
+    </tr>
+</tbody>
+</table>
 {{ end }}
