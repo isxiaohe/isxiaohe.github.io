@@ -1,164 +1,138 @@
-/* 全局变量：保持宽屏和等宽字体 */
+/* Lato Font from Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* Root variables */
 :root {
-    --max-width: 1100px;
-    --font-main: 'JetBrains Mono', monospace;
-    --bg-color: #ffffff;
+    --max-width: 800px;
+    --link-blue: #1772d0;
+    --link-hover: #f09228;
+    --highlight-bg: #ffffd0;
     --text-color: #222222;
     --text-muted: #666666;
-    --link-blue: #0366d6;
 }
 
+/* Base styles */
 body {
-    font-family: var(--font-main);
-    font-size: 15px;
-    /* 关键：将行高从 1.7 或 1.6 调低 */
-    line-height: 1.45; 
+    font-family: 'Lato', Verdana, Helvetica, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
     color: var(--text-color);
-    background-color: var(--bg-color);
+    background-color: #ffffff;
     margin: 0;
     padding: 0;
-    letter-spacing: -0.02em;
 }
 
-.bio-text p {
-    margin-top: 0;
-    margin-bottom: 12px; /* 压缩段落之间的距离，默认通常是 16px 或更多 */
+/* Typography */
+td, th, tr, p, a, strong {
+    font-family: 'Lato', Verdana, Helvetica, sans-serif;
+    font-size: 14px;
 }
 
-.name-title {
-    font-size: 2.2rem;
-    margin: 40px 0 10px 0; /* 减少标题下方的留白 */
-    letter-spacing: -0.5px;
+h2 {
+    margin: 0;
+    font-weight: normal;
+    font-size: 22px;
 }
 
-.links-section {
-    margin-top: 5px; /* 紧贴简介文字 */
-    padding-top: 5px;
-    border-top: 1px solid #eeeeee;
+/* Links */
+a {
+    color: var(--link-blue);
+    text-decoration: none;
 }
 
-/* 专门针对首页的论文列表进行微调 */
-.home-publications h2 {
-    font-size: 1.3rem; /* 稍微调小一点标题 */
-    margin-top: 40px;  /* 简介与论文板块的间距 */
-    margin-bottom: 15px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
+a:focus,
+a:hover {
+    color: var(--link-hover);
+    text-decoration: none;
 }
 
-.home-publications .pub-card {
-    padding: 12px 0; /* 减少每篇论文上下方的 padding (原先可能是 25px) */
-    border-bottom: 1px solid #f9f9f9;
+/* Name title */
+.name {
+    padding-top: 20px;
+    margin: 0;
+    font-size: 32px;
+    font-weight: normal;
 }
 
-.home-publications .pub-title {
-    font-size: 1.05rem; /* 首页标题略小一点 */
-    margin-bottom: 2px;
+/* Paper title */
+.papertitle {
+    font-weight: 700;
 }
 
-.home-publications .pub-authors, 
-.home-publications .pub-venue {
-    line-height: 1.3; /* 进一步收紧元数据行高 */
-}
-
+/* Container - centered 800px */
 .container {
+    width: 100%;
     max-width: var(--max-width);
     margin: 0 auto;
-    padding: 0 40px;
+    padding: 0;
 }
 
-/* 导航栏：简洁横线 */
-nav {
-    padding: 40px 0;
-    border-bottom: 1px solid #eeeeee;
-}
-
-.nav-links a {
-    margin-left: 30px;
-    text-decoration: none;
-    color: var(--text-color);
-    font-weight: 600;
-}
-
-.nav-links a:hover {
-    color: var(--link-blue);
-}
-
-/* 首页标题 */
-.name-title {
-    font-size: 2.2rem;
-    margin: 40px 0 20px 0;
-    letter-spacing: -0.5px;
-}
-
-/* 论文列表：去掉绿色，使用严谨的蓝色标题 */
-.publication-list {
+/* Profile photo placeholder */
+.profile-photo {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
-    flex-direction: column;
-    margin-top: 30px;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    margin: 0 auto;
 }
 
-.pub-card {
-    display: flex;
-    gap: 30px;
-    padding: 25px 0;
-    border-bottom: 1px solid #f5f5f5;
+/* Publication thumbnail hover effects */
+.one {
+    width: 160px;
+    height: 160px;
+    position: relative;
 }
 
-.pub-thumbnail {
-    flex: 0 0 200px;
+.two {
+    width: 160px;
+    height: 160px;
+    position: absolute;
+    transition: opacity .2s ease-in-out;
+    -moz-transition: opacity .2s ease-in-out;
+    -webkit-transition: opacity .2s ease-in-out;
 }
 
-.pub-thumbnail img {
-    width: 100%;
-    border: 1px solid #eeeeee;
+.fade {
+    transition: opacity .2s ease-in-out;
+    -moz-transition: opacity .2s ease-in-out;
+    -webkit-transition: opacity .2s ease-in-out;
 }
 
-.pub-title {
-    margin: 0 0 6px 0;
-    font-size: 1.1rem;
-    color: var(--link-blue);
-    text-decoration: none;
+/* Highlight for selected papers */
+span.highlight {
+    background-color: var(--highlight-bg);
 }
 
-.pub-authors {
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-}
-
-.pub-venue {
-    font-size: 0.9rem;
+/* Notes page styles */
+.notes-intro {
     color: var(--text-muted);
-    font-style: italic;
+    margin-bottom: 30px;
 }
 
-.pub-abstract {
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    margin: 12px 0;
-    line-height: 1.5;
-}
-
-/* 统一的条目容器样式 (Notes 和 Reading 共用逻辑) */
 .note-item-container {
-    border-left: 3px solid #eeeeee; /* 灰色的侧边装饰线 */
-    padding-left: 20px;            /* 留出间距 */
-    margin-bottom: 35px;           /* 条目之间的距离 */
+    border-left: 3px solid #eeeeee;
+    padding-left: 20px;
+    margin-bottom: 30px;
     transition: border-color 0.2s;
 }
 
-/* 鼠标悬停时侧边线变色，增加互动感但不过分 */
-.note-item-container:hover{
-    border-left: 3px solid var(--link-blue);
+.note-item-container:hover {
+    border-left-color: var(--link-blue);
 }
 
-.note-item-title{
+.note-item-title {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     line-height: 1.3;
 }
 
-.note-item-title a{
+.note-item-title a {
     text-decoration: none;
     color: var(--text-color);
     font-weight: 600;
@@ -168,41 +142,24 @@ nav {
     color: var(--link-blue);
 }
 
-/* 元数据行样式 (日期、作者、分类等) */
-.note-item-meta{
+.note-item-meta {
     font-size: 0.9em;
-    color: #666666;
+    color: var(--text-muted);
     margin-top: 4px;
 }
 
-.note-item-summary{
+.note-item-summary {
     font-size: 0.88em;
     margin-top: 8px;
     color: #444444;
     line-height: 1.5;
-    /* 限制摘要行数，保持整洁 */
-    display: -webkit-box;
-    /* -webkit-line-clamp: 2; */
-    -webkit-box-orient: vertical;
-    overflow: hidden;
 }
 
-/* 链接通用样式 */
-.links-section {
-    margin-top: 30px;
-    padding-top: 20px;
-}
-
-.links-section a {
-    margin-right: 20px;
-    text-decoration: none;
-    color: var(--link-blue);
-}
-
+/* Footer */
 footer {
-    margin-top: 80px;
-    padding: 40px 0;
+    margin-top: 60px;
+    padding: 20px 0;
     font-size: 0.85em;
     color: var(--text-muted);
-    border-top: 1px solid #eeeeee;
+    text-align: center;
 }
