@@ -1,0 +1,78 @@
+<h2>Profile Photo</h2>
+<p class="subtitle">The Jon Barron style features a circular profile photo on the right side</p>
+
+<div class="split">
+  <!-- With Photo -->
+  <div class="mockup">
+    <div class="mockup-header">With Profile Photo</div>
+    <div class="mockup-body" style="font-family: 'Lato', Verdana, sans-serif; font-size: 14px; padding: 20px;">
+      <div style="display: flex;">
+        <div style="flex: 63%; padding-right: 20px;">
+          <p style="text-align: center; font-size: 28px; margin: 0 0 10px 0; font-weight: normal;">
+            Zhifei Yang
+          </p>
+          <p style="line-height: 1.6;">
+            I am an undergraduate student at <a href="#" style="color: #1772d0;">Peking University</a>.
+            My research interests lie at the intersection of <strong>Computer Vision</strong>, <strong>Character Animation</strong>, and <strong>Robotics</strong>.
+          </p>
+          <p style="text-align: center; margin-top: 15px;">
+            <a href="#" style="color: #1772d0;">Email</a> &nbsp;/&nbsp;
+            <a href="#" style="color: #1772d0;">CV</a> &nbsp;/&nbsp;
+            <a href="#" style="color: #1772d0;">Scholar</a> &nbsp;/&nbsp;
+            <a href="#" style="color: #1772d0;">GitHub</a>
+          </p>
+        </div>
+        <div style="flex: 37%; display: flex; align-items: center; justify-content: center;">
+          <div style="width: 160px; height: 160px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">ZY</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Without Photo -->
+  <div class="mockup">
+    <div class="mockup-header">Without Photo</div>
+    <div class="mockup-body" style="font-family: 'Lato', Verdana, sans-serif; font-size: 14px; padding: 20px;">
+      <div>
+        <p style="text-align: center; font-size: 28px; margin: 0 0 15px 0; font-weight: normal;">
+          Zhifei Yang
+        </p>
+        <p style="line-height: 1.6; text-align: center; max-width: 500px; margin: 0 auto;">
+          I am an undergraduate student at <a href="#" style="color: #1772d0;">Peking University</a>.
+          My research interests lie at the intersection of <strong>Computer Vision</strong>, <strong>Character Animation</strong>, and <strong>Robotics</strong>.
+        </p>
+        <p style="text-align: center; margin-top: 15px;">
+          <a href="#" style="color: #1772d0;">Email</a> &nbsp;/&nbsp;
+          <a href="#" style="color: #1772d0;">CV</a> &nbsp;/&nbsp;
+          <a href="#" style="color: #1772d0;">Scholar</a> &nbsp;/&nbsp;
+          <a href="#" style="color: #1772d0;">GitHub</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3 style="margin-top: 30px;">Do you have a profile photo to use?</h3>
+<div class="options">
+  <div class="option" data-choice="has-photo" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Yes, I have a photo</h3>
+      <p>I'll provide the path or upload it</p>
+    </div>
+  </div>
+  <div class="option" data-choice="no-photo" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>No photo for now</h3>
+      <p>Skip the photo, center the bio text instead</p>
+    </div>
+  </div>
+  <div class="option" data-choice="placeholder" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Use placeholder</h3>
+      <p>Show a placeholder circle with initials for now</p>
+    </div>
+  </div>
+</div>

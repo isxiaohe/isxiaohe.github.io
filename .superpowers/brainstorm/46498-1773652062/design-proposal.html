@@ -1,0 +1,127 @@
+<h2>Design Proposal: Jon Barron Style for Your Site</h2>
+<p class="subtitle">Based on your choices, here's the complete design</p>
+
+<div class="mockup">
+  <div class="mockup-header">Homepage Layout</div>
+  <div class="mockup-body" style="font-family: 'Lato', Verdana, sans-serif; font-size: 14px; padding: 20px; max-width: 800px; margin: 0 auto;">
+
+    <!-- Navigation -->
+    <div style="border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px;">
+      <strong>Zhifei Yang</strong>
+      <span style="float: right;">
+        <a href="#" style="color: #1772d0; margin-left: 15px;">Notes</a>
+        <a href="#" style="color: #1772d0; margin-left: 15px;">Paper Reading</a>
+      </span>
+    </div>
+
+    <!-- Header with placeholder photo -->
+    <div style="display: flex; margin-bottom: 20px;">
+      <div style="flex: 63%; padding-right: 20px;">
+        <p style="text-align: center; font-size: 32px; margin: 0 0 15px 0; font-weight: normal;">
+          Zhifei Yang
+        </p>
+        <p style="line-height: 1.6;">
+          I am an undergraduate student at <a href="#" style="color: #1772d0;">Peking University</a>.
+          My research interests lie at the intersection of <strong>Computer Vision</strong>, <strong>Character Animation</strong>, and <strong>Robotics</strong>.
+        </p>
+        <p style="text-align: center; margin-top: 15px;">
+          <a href="#" style="color: #1772d0;">Email</a> &nbsp;/&nbsp;
+          <a href="#" style="color: #1772d0;">CV</a> &nbsp;/&nbsp;
+          <a href="#" style="color: #1772d0;">Scholar</a> &nbsp;/&nbsp;
+          <a href="#" style="color: #1772d0;">GitHub</a>
+        </p>
+      </div>
+      <div style="flex: 37%; display: flex; align-items: center; justify-content: center;">
+        <div style="width: 160px; height: 160px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px; font-weight: bold;">ZY</div>
+      </div>
+    </div>
+
+    <!-- Research section -->
+    <div style="margin-top: 30px; padding: 15px 0;">
+      <h2 style="font-size: 22px; font-weight: normal; margin: 0;">Research</h2>
+      <p style="margin: 10px 0;">I'm interested in computer vision, 3D reconstruction, and generative AI.</p>
+    </div>
+
+    <!-- Publication with thumbnail (highlighted) -->
+    <div style="display: flex; padding: 16px; background: #ffffd0; border-radius: 4px; margin-top: 15px;">
+      <div style="width: 160px; height: 106px; background: linear-gradient(45deg, #ff6b6b, #4ecdc4); margin-right: 20px; flex-shrink: 0; border-radius: 4px;"></div>
+      <div>
+        <a href="#" style="color: #1772d0; font-weight: 700;">G4Splat: Geometry-Guided Gaussian Splatting with Generative Prior</a>
+        <br>
+        <span style="font-size: 14px;">
+          Junfeng Ni, Yixin Chen, <strong>Zhifei Yang</strong>, Yu Liu, Ruijie Lu, Song-Chun Zhu, Siyuan Huang
+        </span>
+        <br>
+        <em style="font-size: 14px; color: #666;">ICLR</em>, 2026
+        <br>
+        <span style="font-size: 14px;">
+          <a href="#" style="color: #1772d0;">paper</a> /
+          <a href="#" style="color: #1772d0;">code</a>
+        </span>
+        <p style="font-size: 14px; margin-top: 8px; color: #444;">
+          Leveraging generative prior for 3D scene reconstruction with accurate geometry guidance...
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section" style="margin-top: 30px;">
+  <h3>Design Summary</h3>
+  <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
+    <tr style="background: #f5f5f5;">
+      <td style="padding: 10px; border: 1px solid #ddd;"><strong>Font</strong></td>
+      <td style="padding: 10px; border: 1px solid #ddd;">Lato (Google Fonts), 14px body, 32px name</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #ddd;"><strong>Max Width</strong></td>
+      <td style="padding: 10px; border: 1px solid #ddd;">800px (centered)</td>
+    </tr>
+    <tr style="background: #f5f5f5;">
+      <td style="padding: 10px; border: 1px solid #ddd;"><strong>Link Colors</strong></td>
+      <td style="padding: 10px; border: 1px solid #ddd;">Blue (#1772d0) → Orange (#f09228) on hover</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #ddd;"><strong>Profile Photo</strong></td>
+      <td style="padding: 10px; border: 1px solid #ddd;">Placeholder circle with "ZY" initials</td>
+    </tr>
+    <tr style="background: #f5f5f5;">
+      <td style="padding: 10px; border: 1px solid #ddd;"><strong>Publications</strong></td>
+      <td style="padding: 10px; border: 1px solid #ddd;">160px thumbnails with hover effects, yellow highlight for selected</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #ddd;"><strong>Navigation</strong></td>
+      <td style="padding: 10px; border: 1px solid #ddd;">Top bar with Notes & Paper Reading links</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section" style="margin-top: 30px;">
+  <h3>Files to Modify/Create</h3>
+  <ul style="font-size: 14px; line-height: 1.8;">
+    <li><code>layouts/index.html</code> - New homepage layout</li>
+    <li><code>layouts/_default/baseof.html</code> - Update base template</li>
+    <li><code>static/css/style.css</code> - Complete CSS rewrite (Lato font, colors, hover effects)</li>
+    <li><code>content/_index.md</code> - Update bio text if needed</li>
+    <li><code>static/images/</code> - Add publication thumbnails</li>
+  </ul>
+</div>
+
+<h3 style="margin-top: 30px;">Does this design look good?</h3>
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Yes, proceed!</h3>
+      <p>Start implementing this design</p>
+    </div>
+  </div>
+  <div class="option" data-choice="tweaks" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Small tweaks needed</h3>
+      <p>I'll tell you what to adjust</p>
+    </div>
+  </div>
+</div>

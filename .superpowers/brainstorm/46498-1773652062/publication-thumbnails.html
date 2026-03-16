@@ -1,0 +1,99 @@
+<h2>Publication Thumbnails</h2>
+<p class="subtitle">Jon Barron's style shows thumbnail images/videos for each paper with hover effects</p>
+
+<div class="split">
+  <!-- With Thumbnails -->
+  <div class="mockup">
+    <div class="mockup-header">With Thumbnails + Hover Effect</div>
+    <div class="mockup-body" style="font-family: 'Lato', Verdana, sans-serif; font-size: 14px; padding: 15px;">
+      <div style="display: flex; padding: 12px 0; background: #ffffd0; margin-bottom: 10px; border-radius: 4px; padding: 10px;">
+        <div style="width: 120px; height: 80px; background: linear-gradient(45deg, #ff6b6b, #4ecdc4); margin-right: 15px; flex-shrink: 0; position: relative; overflow: hidden;">
+          <div style="position: absolute; inset: 0; background: linear-gradient(45deg, #4ecdc4, #44a08d); opacity: 0; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0"></div>
+        </div>
+        <div>
+          <a href="#" style="color: #1772d0; font-weight: 700; font-size: 14px;">G4Splat: Geometry-Guided Gaussian Splatting with Generative Prior</a>
+          <div style="font-size: 13px; margin-top: 4px;">
+            Junfeng Ni, Yixin Chen, <strong>Zhifei Yang</strong>, et al.
+          </div>
+          <div style="font-size: 13px; color: #666;"><em>ICLR</em>, 2026</div>
+          <div style="font-size: 13px; margin-top: 4px;">
+            <a href="#" style="color: #1772d0;">paper</a> /
+            <a href="#" style="color: #1772d0;">code</a>
+          </div>
+          <p style="font-size: 13px; margin-top: 6px; color: #444;">
+            Leveraging generative prior for 3D scene reconstruction with accurate geometry guidance...
+          </p>
+        </div>
+      </div>
+
+      <div style="display: flex; padding: 12px 0;">
+        <div style="width: 120px; height: 80px; background: linear-gradient(45deg, #667eea, #764ba2); margin-right: 15px; flex-shrink: 0;"></div>
+        <div>
+          <a href="#" style="color: #1772d0; font-weight: 700; font-size: 14px;">Another Paper Title</a>
+          <div style="font-size: 13px; margin-top: 4px; color: #666;">
+            <em>Conference</em>, 2025
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Without Thumbnails -->
+  <div class="mockup">
+    <div class="mockup-header">Simple List (No Thumbnails)</div>
+    <div class="mockup-body" style="font-family: 'Lato', Verdana, sans-serif; font-size: 14px; padding: 15px;">
+      <div style="padding: 12px 0; border-bottom: 1px solid #eee;">
+        <a href="#" style="color: #1772d0; font-weight: 700; font-size: 14px;">G4Splat: Geometry-Guided Gaussian Splatting with Generative Prior</a>
+        <div style="font-size: 13px; margin-top: 4px;">
+          Junfeng Ni, Yixin Chen, <strong>Zhifei Yang</strong>, et al.
+        </div>
+        <div style="font-size: 13px; color: #666;"><em>ICLR</em>, 2026</div>
+        <div style="font-size: 13px; margin-top: 4px;">
+          <a href="#" style="color: #1772d0;">paper</a> /
+          <a href="#" style="color: #1772d0;">code</a>
+        </div>
+      </div>
+
+      <div style="padding: 12px 0; border-bottom: 1px solid #eee;">
+        <a href="#" style="color: #1772d0; font-weight: 700; font-size: 14px;">Another Paper Title</a>
+        <div style="font-size: 13px; margin-top: 4px; color: #666;">
+          <em>Conference</em>, 2025
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 25px;">
+  <h3>Thumbnail Options</h3>
+  <ul style="font-size: 14px; line-height: 1.8;">
+    <li><strong>Hover effects:</strong> Can show before/after images or video when hovering</li>
+    <li><strong>Highlighted papers:</strong> Yellow background for featured work</li>
+    <li><strong>You currently have:</strong> 1 publication (G4Splat) with an image path set</li>
+  </ul>
+</div>
+
+<h3 style="margin-top: 25px;">How should publications be displayed?</h3>
+<div class="options">
+  <div class="option" data-choice="thumbnails-hover" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Full thumbnails with hover effects</h3>
+      <p>Like Jon Barron - images that change on hover (you'll add images later)</p>
+    </div>
+  </div>
+  <div class="option" data-choice="thumbnails-simple" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Simple thumbnails (no hover)</h3>
+      <p>Static image for each paper, cleaner look</p>
+    </div>
+  </div>
+  <div class="option" data-choice="no-thumbnails" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>No thumbnails</h3>
+      <p>Simple text list, faster to implement</p>
+    </div>
+  </div>
+</div>
