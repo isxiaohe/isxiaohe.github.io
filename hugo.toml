@@ -7,6 +7,16 @@ ignoreLogs = ['warning-goldmark-raw-html']
     [markup.goldmark]
         [markup.goldmark.renderer]
             unsafe = true
+        [markup.goldmark.extensions]
+            [markup.goldmark.extensions.passthrough]
+                enable = true
+                [markup.goldmark.extensions.passthrough.delimiters]
+                    block = [['$$', '$$']]
+                    inline = [['$', '$']]
+    [markup.highlight]
+        style = 'github'
+        lineNos = false
+        codeFences = true
 
 [params]
     author = "Zhifei Yang"
