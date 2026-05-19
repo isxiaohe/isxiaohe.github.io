@@ -93,9 +93,17 @@ a:hover {
     width: 160px;
     height: 160px;
     position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    overflow: hidden;
     transition: opacity .2s ease-in-out;
     -moz-transition: opacity .2s ease-in-out;
     -webkit-transition: opacity .2s ease-in-out;
+}
+
+.one:hover .two {
+    opacity: 1;
 }
 
 .fade {
