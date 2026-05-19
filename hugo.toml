@@ -1,4 +1,4 @@
-baseURL = 'https://example.org/'
+baseURL = 'https://isxiaohe.github.com/'
 languageCode = 'en-us'
 title = 'Zhifei Yang'
 ignoreLogs = ['warning-goldmark-raw-html']
