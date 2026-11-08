@@ -1,0 +1,32 @@
+{{ define "main" }}
+<link rel="stylesheet" href="{{ "css/note-longform.css" | relURL }}">
+<article class="note-longform" lang="{{ .Params.content_language | default "en" }}" id="note-top">
+    <header class="note-header">
+        <nav class="note-breadcrumb" aria-label="导航">
+            <a href="{{ "/" | relURL }}">Home</a> / <a href="{{ "notes/" | relURL }}">Notes</a>
+        </nav>
+        <h1>{{ .Title }}</h1>
+        <p class="note-meta"><time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>{{ with .Params.tags }} · {{ delimit . " / " }}{{ end }}</p>
+        {{ with .Params.tldr }}<p class="note-summary">{{ . }}</p>{{ end }}
+        {{ with .Params.downloads }}
+        <nav class="note-downloads" aria-label="下载与源码">
+            {{ range . }}<a href="{{ .url }}"{{ if .download }} download{{ end }}>{{ .label }}</a>{{ end }}
+        </nav>
+        {{ end }}
+    </header>
+
+    <details class="note-toc">
+        <summary>{{ .Params.toc_label | default "目录" }}</summary>
+        {{ .TableOfContents }}
+    </details>
+
+    <div class="note-content">
+        {{ .Content }}
+    </div>
+
+    <nav class="note-end" aria-label="文章导航">
+        <a href="#note-top">↑ 返回顶部</a>
+        <a href="{{ "notes/" | relURL }}">← 所有 Notes</a>
+    </nav>
+</article>
+{{ end }}
