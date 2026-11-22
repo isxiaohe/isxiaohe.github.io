@@ -16,9 +16,9 @@ downloads:
     url: "https://github.com/isxiaohe/isxiaohe.github.io/tree/main/content/notes/efficient-ml-part-1-pruning/code"
 ---
 
-**Efficient ML · Part I.** From sparse weight representations to GPU kernels, pruning criteria, and post-pruning recovery.
+**Efficient ML · Part I.** Pruning turns learned redundancy into more efficient operators. We can use it to reduce weight storage, replace expensive dense operations with sparse GPU kernels, or shrink channels and heads so that the network performs smaller dense matrix multiplications.
 
-We use a linear layer as the running example, with **Einstein summation** over repeated indices:
+The starting point is a linear layer, written using **Einstein summation notation**:
 
 $$
 \boxed{y_{bn}=x_{bk}w_{nk}},\qquad
@@ -27,29 +27,32 @@ w\in\mathbb R^{N\times K},\quad
 y\in\mathbb R^{B\times N}.
 $$
 
-Here $b$ indexes examples/tokens, $k$ input features, and $n$ output features. For example, `torch.einsum("bk,nk->bn", x, w)` is equivalent to `torch.nn.functional.linear(x, w)` without bias. The three questions to keep separate are **what to remove**, **how to compute the remaining weights**, and **how to recover the lost function**.
+Here $b$ indexes examples or tokens, $k$ input features, and $n$ output features. Repeated indices are summed, so the equation corresponds to `torch.einsum("bk,nk->bn", x, w) or `torch.nn.functional.linear(x, w) without bias.
+
+We will build a complete compression pipeline: **represent and execute sparse operators → choose weights using importance scores → reconstruct and fine-tune the remaining weights → apply the same principles to attention and convolution**. Each stage has a concrete mathematical objective and a corresponding implementation.
 
 ## 1. Sparse computation, formats, and regularity
 
-**Zeroing weights does not automatically accelerate a GPU.** After pruning, introduce a binary mask $m_{nk}$ and effective weights $\widetilde w_{nk}=m_{nk}w_{nk}$. The mathematical output is still
+Suppose we introduce a binary support mask $m_{nk}\in\{0,1\}$ and define effective weights
 
 $$
-y_{bn}=x_{bk}\widetilde w_{nk}.
+\widetilde w_{nk}=m_{nk}w_{nk},\qquad y_{bn}=x_{bk}\widetilde w_{nk}.
 $$
 
-A conventional dense GEMM still loads and processes the dense matrix—including zeros. Actual speedup requires either a kernel that understands the sparse representation or a physically smaller, still-dense operator.
+The next step is to turn that mask into an efficient operator. There are two principal strategies. **Sparse execution** retains the original tensor dimensions and processes packed nonzero weights. **Structured pruning** removes entire dimensions, giving a smaller dense operator. Block sparsity and $N{:}M$ sparsity provide intermediate, GPU-friendly structures.
 
 ![Dense, unstructured, block, 2:4, and structured pruning patterns](figures/01_sparsity_patterns.svg)
 
 *Figure 1. Five patterns, with the same conceptual input/output axes. A channel-pruned matrix has fewer rows; it is not merely a large matrix with zeroed rows.*
 
-**Unstructured sparsity and CSR.** A zero pattern can be arbitrary. For each output $n$, let $\Omega_n=\{k:\widetilde w_{nk}\neq0\}$. Then
+**Unstructured sparsity and CSR.** Let $\Omega_n$ denote the surviving input indices for output channel $n$:
 
 $$
-y_{bn}=\sum_{k\in\Omega_n}x_{bk}\widetilde w_{nk}.
+\Omega_n=\{k:\widetilde w_{nk}\neq0\},\qquad
+\boxed{y_{bn}=\sum_{k\in\Omega_n}x_{bk}\widetilde w_{nk}}.
 $$
 
-A compressed sparse row (CSR) matrix stores nonzero values $v_p$, column indices $c_p$, and row offsets $r_n$. Computation becomes
+We can implement this restricted sum with **compressed sparse row (CSR)** storage. CSR consists of nonzero values $v_p$, their input-column indices $c_p$, and row offsets $r_n$. The sparse matrix multiplication becomes
 
 $$
 \boxed{y_{bn}=\sum_{p=r_n}^{r_{n+1}-1}x_{b,c_p}v_p}.
@@ -58,29 +61,55 @@ $$
 For example,
 
 $$
-\widetilde W=\begin{bmatrix}1&0&0&2\\0&3&0&0\\4&0&5&0\end{bmatrix},\quad
-v=[1,2,3,4,5],\quad c=[0,3,1,0,2],\quad r=[0,2,3,5].
+\widetilde W=
+\begin{bmatrix}
+1&0&0&2\\
+0&3&0&0\\
+4&0&5&0
+\end{bmatrix},\quad
+v=[1,2,3,4,5],\quad
+c=[0,3,1,0,2],\quad
+r=[0,2,3,5].
 $$
 
-A CSR SpMM kernel can assign output rows/tiles to threads or warps, read the stored values, gather $x_{b,c_p}$, and accumulate products. The drawback is that $c_p$ causes indirect activation reads and rows may contain different amounts of work. CSR is especially attractive at *high* sparsity, not necessarily at only 50% sparsity. For example, FP16 dense weights require $2NK$ bytes; CSR with FP16 values and INT32 column indices requires approximately $6\operatorname{nnz}+4(N+1)$ bytes, so ignoring row-pointer overhead, it saves storage only when more than roughly two-thirds of entries are zero.
+For output channel $n=0$, the kernel reads the first two packed values and computes $y_{b0}=x_{b0}+2x_{b3}$. Different output rows or tiles can be processed by different GPU warps. Each warp reads the packed weight values, gathers the corresponding activations, and accumulates the products. In block-sparse kernels, the surviving values are organized into contiguous tiles to give the GPU larger units of work.
 
-**2:4 semi-structured sparsity.** Rather than allowing arbitrary zeros, partition the reduction dimension into four-element groups, $k=4g+r$, $r\in\{0,1,2,3\}$, and impose
+A direct PyTorch implementation of the same operation is:
+
+~~~python
+import torch
+
+W = torch.tensor([[1., 0., 0., 2.],
+                  [0., 3., 0., 0.],
+                  [4., 0., 5., 0.]])
+X = torch.randn(6, 4)                   # [B, K]
+W_csr = W.to_sparse_csr()                # [N, K]
+Y_sparse = torch.sparse.mm(W_csr, X.T).T # [B, N]
+Y_dense = torch.einsum("bk,nk->bn", X, W)
+torch.testing.assert_close(Y_sparse, Y_dense)
+~~~
+
+CSR gives us flexible sparse computation; the layout of column indices controls gather behavior, and row offsets determine how work is distributed across threads. As a concrete storage calculation, FP16 dense weights occupy $2NK$ bytes, while CSR with FP16 values and INT32 column indices occupies approximately $6\,\mathrm{nnz}+4(N+1)$ bytes. This helps decide the sparsity level at which compression becomes worthwhile.
+
+**2:4 semi-structured sparsity.** For a more regular GPU operator, partition the reduction dimension into groups of four, $k=4g+r$, $r\in\{0,1,2,3\}$, and keep exactly two positions in each group:
 
 $$
 \boxed{\sum_{r=0}^{3}m_{n,4g+r}=2}.
 $$
 
-For each group, retain two *positions* and pack two weight values $v_{ngq}$ together with their local positions $j_{ngq}\in\{0,1,2,3\}$, for $q\in\{0,1\}$. The corresponding computation is
+Write $v_{ngq}$ for retained value $q\in\{0,1\}$ and $j_{ngq}\in\{0,1,2,3\}$ for its original position. The contraction becomes
 
 $$
 \boxed{y_{bn}=\sum_g\sum_{q=0}^{1}x_{b,4g+j_{ngq}}v_{ngq}}.
 $$
 
+For example, $[0.8,0.05,-0.6,0.02]$ is packed as values $[0.8,-0.6]$ with position metadata $[0,2]$. The contribution to one output is $0.8x_{b,4g}-0.6x_{b,4g+2}$. A Sparse Tensor Core executes this pattern at the level of matrix tiles, using a compact, regular representation of both values and positions [1,2].
+
 ![2:4 packed weights, position metadata, and selected activations](figures/03_2to4_compression.svg)
 
-*Figure 2. Packing encodes both surviving values and their positions. The hardware does not need an `if weight != 0` branch for every multiplication.*
+*Figure 2. Two surviving values and their positions form a compact unit that Sparse Tensor Core instructions can process directly.*
 
-On compatible NVIDIA GPUs, Sparse Tensor Core instructions use this structured metadata to select the relevant activation elements while performing sparse matrix-multiply–accumulate operations. **2:4 halves the relevant mathematical multiply–accumulate count**, but the matrix operation's measured speedup depends on tile dimensions, dtype, data movement, and kernel overhead; end-to-end model speedup is usually smaller than the theoretical factor. A packed FP16 2:4 tensor in the documented PyTorch representation occupies **9/16 of the dense storage** (values plus metadata), rather than exactly one-half [1, 2].
+For an FP16 linear layer, 2:4 pruning retains half of the effective weight multiplications. A supported PyTorch packed 2:4 representation occupies **9/16 of the dense weight storage**, including metadata [2]. Consider a $4096\times4096$ FP16 weight matrix: dense storage is 32 MiB, while the documented packed representation requires about 18 MiB. For a batch dimension $B=1024$, the dense contraction performs approximately **17.18 billion multiply–accumulates (MACs)**; 2:4 sparse arithmetic uses **8.59 billion**. This is the arithmetic and storage budget the specialized kernel exploits.
 
 **Structured pruning** removes an entire logical dimension. Consider a two-layer MLP:
 
@@ -90,31 +119,31 @@ $$
 
 If we retain only hidden units $s\in S$, we create $\widetilde a\in\mathbb R^{|S|\times K}$ and $\widetilde u\in\mathbb R^{O\times|S|}$; the original hidden dimension $I$ becomes $|S|$. No sparse kernel is needed: the GEMMs are simply smaller. The same principle applies to deleting CNN channels and attention heads, provided all dependent weight slices are removed consistently.
 
-![How dense GEMM, CSR SpMM, and structured sparse MMA differ](figures/02_gpu_execution_paths.svg)
-
-*Figure 3. The same zeros can lead to three very different GPU execution paths. The layout, not merely the zero count, is decisive.*
-
-Sparsity itself is a scalar,
+**Measuring sparsity and performance.** We describe a compressed operator using both its zero fraction and the regularity of its structure:
 
 $$
-\text{sparsity}=\frac{N_{\rm zero}}{N_{\rm total}},\qquad
+\text{sparsity}=\frac{N_{\rm zero}}{N_{\rm total}},
+\qquad
 \text{density}=1-\text{sparsity}.
 $$
 
-But the **regularity of the sparse pattern** is a separate property: arbitrary element locations, fixed blocks, $N{:}M$ constraints, and full channels have progressively stronger structural restrictions. This is not a universally defined single numeric score. For deployed models, report at least four distinct quantities:
+A pattern can be unstructured, block-sparse, $N{:}M$ sparse, or structured along whole channels and heads. The same sparsity ratio can produce different performance because each pattern has a different representation and kernel.
 
-| Quantity | Definition / diagnostic | What it tells you |
+| Quantity | Measurement | Example |
 |---|---|---|
-| Sparsity | `#zero / #total` | Fraction of masked weights |
-| Storage | Compressed tensor bytes, including metadata | Actual memory savings |
-| Effective MACs | Dense: $BNK$; ideal 2:4: $BNK/2$ | Arithmetic that can potentially be skipped |
-| Latency | GPU time for the real shapes and workload | Actual inference improvement |
+| Sparsity | Zero entries / total entries | 2:4 gives 50% |
+| Compressed weight size | Values plus metadata | 32 MiB → about 18 MiB for the FP16 example |
+| Effective arithmetic | Number of active MACs | $BNK\to BNK/2$ for 2:4 |
+| Kernel latency | CUDA event timing | Compare equal input shapes and precision |
+| Model throughput | Tokens/second or examples/second | Measure full prefill/decode workloads |
 
-A quick Amdahl-law check illustrates the difference between kernel and model speed: if 70% of a workload benefits from a 2× faster sparse GEMM and the other 30% is unchanged, overall speedup is only $1/(0.30+0.70/2)\approx1.54\times$. This is an illustrative calculation, not a benchmark.
+![How dense GEMM, CSR SpMM, and structured sparse MMA differ](figures/02_gpu_execution_paths.svg)
 
-For a Transformer, measure **prefill** and **decode** separately: large prefill GEMMs and small decode GEMMs have different computational/communication bottlenecks. Sparse weight storage may help bandwidth-sensitive execution, but metadata and kernel inefficiencies can erase the gain. NVIDIA provides general unstructured sparse routines through cuSPARSE and structured sparse GEMM through cuSPARSELt [1, 3].
+*Figure 3. Dense GEMM computes regular full tiles; CSR SpMM gathers packed nonzeros; 2:4 sparse MMA combines fixed sparsity metadata with specialized Tensor Core computation.*
 
-The minimal PyTorch experiment below shows the difference between *zeroed dense* weights and a *packed sparse* weight. It requires a supported CUDA GPU, PyTorch build, dtype, and dimensions; the CPU-only examples in later sections do not.
+The kernel determines how arithmetic reduction translates into time savings. For example, if a workload spends 70% of its time in a GEMM that becomes twice as fast, Amdahl's law gives an overall acceleration of $1/(0.30+0.70/2)\approx1.54\times$. This also motivates benchmarking **prefill and decode separately** in language models. NVIDIA supplies general sparse operations through cuSPARSE and specialized 2:4 sparse GEMM through cuSPARSELt [1,3].
+
+The next experiment compares two implementations of the same pruned linear operator: a dense tensor containing zeros and a packed 2:4 sparse tensor. It verifies the outputs and benchmarks both GPU execution paths.
 
 ```python
 import torch
@@ -155,11 +184,18 @@ with torch.inference_mode():
     print("2:4   ms:", ms_per_call(lambda: F.linear(x, w_packed)))
 ```
 
-These are **forward-only inference** times for this particular shape, not an end-to-end LLM benchmark. See the exact compatibility requirements in the PyTorch sparse documentation [2].
+The measured ratio of dense to sparse latency quantifies the benefit of this operator on the test GPU. The same measurement can be repeated for the matrix sizes encountered during model inference [2].
 
 ## 2. Pruning scores, Hessians, and regression reconstruction
 
-**Choosing a support is different from refitting its weights.** Given a budget of $P$ retained weights, we seek a mask $m$ with $\lVert m\rVert_0\le P$, then adjust the retained weights to limit the loss. The mask can be selected globally, per output channel, per $N{:}M$ group, or per structural group; these constraints change the problem. In 2:4 magnitude pruning, for example, we keep the two largest $|w_{n,4g+r}|$ *within each group*, not the globally largest half of all weights.
+The goal of pruning is to choose a **support** (which connections survive) and then fit the remaining weights to preserve the model's function. With $P$ retained parameters, write
+
+$$
+\min_{m,\theta}\mathcal L(m\odot\theta),
+\qquad m_{nk}\in\{0,1\},\qquad \|m\|_0\le P.
+$$
+
+A scoring rule approximates the increase in loss when a parameter or group is removed. The support constraint specifies how scores are compared: globally, per output row, per 2:4 group, or per channel/head. After selecting the support, reconstruction determines how the surviving weights should change.
 
 Here are the principal score families:
 
@@ -187,9 +223,9 @@ mask = torch.zeros_like(W).scatter_(1, keep, 1)
 assert (mask == 0).float().mean() == 0.5
 ```
 
-Wanda's score is easy to motivate from the linear equation. Removing one $w_{nk}$ alone changes output $n$ by $\Delta y_{bn}=-x_{bk}w_{nk}$, so the calibration-set output-change norm is precisely $|w_{nk}|\lVert x_{:k}\rVert_2$. It is still a heuristic for *joint* pruning, because deleting multiple weights introduces correlated errors [4].
+The Wanda score follows directly from the linear contraction. If we delete one weight at a fixed $(n,k)$, then $\Delta y_{bn}=-x_{bk}w_{nk}$, and the output-change norm over calibration examples is $|w_{nk}|\lVert x_{:k}\rVert_2$. Magnitude ranks the weight itself; Wanda ranks its observed contribution under the input distribution [4].
 
-**Second-order pruning.** Flatten the parameters under consideration into $w_i$. Near a stationary point of some chosen loss $\mathcal L$, the second-order approximation is
+**Second-order pruning uses local loss curvature to estimate which deletion can be compensated most efficiently.** Flatten the parameters under consideration into $w_i$. Near a trained stationary solution, Taylor expansion gives
 
 $$
 \Delta\mathcal L\approx \tfrac12\Delta w_iH_{ij}\Delta w_j,
@@ -210,7 +246,7 @@ $$
 \boxed{\Delta\mathcal L_p^*=\frac{w_p^2}{2C_{pp}}}.
 $$
 
-These formulas assume the local quadratic model and an invertible positive-definite Hessian (or a suitably regularized approximation). The off-diagonal entries of $C$ describe how *other* weights can compensate for deleting weight $p$; the score uses the **inverse-Hessian diagonal**, not $H_{pp}$ [5].
+The correction vector $\Delta w^*$ reallocates the deleted weight's contribution to other parameters. Its off-diagonal entries encode compensatory directions; the score $w_p^2/(2C_{pp})$ quantifies the minimum quadratic loss increase after that adjustment. In implementations, a damped curvature matrix can provide a stable inverse [5].
 
 **Regression / layer-wise reconstruction.** Rather than approximating the entire model's task loss, keep the calibration inputs of one Linear layer fixed and use its original outputs as targets:
 
@@ -236,9 +272,9 @@ $$
 \boxed{H_{k\ell}=\sum_bx_{bk}x_{b\ell}\;=\;(X^\top X)_{k\ell}}.
 $$
 
-This is *not* the full model's task-loss Hessian. The equivalence is specific to a **fixed-input linear layer with squared output reconstruction**. It also explains why OBS-style second-order updates naturally appear in reconstruction-based pruning, including SparseGPT [6].
+This is the **exact layer-wise reconstruction Hessian** for fixed inputs. It exposes the connection: regression supplies the squared-output reconstruction objective, and second-order methods exploit its curvature to update weights efficiently. SparseGPT follows this principle with efficient blockwise updates [6].
 
-Once a set of input features $S$ is fixed, ordinary least squares can fit the surviving row of weights. In matrix notation, given original output $Y=XW^\top$,
+Once a set of input features $S$ is selected, we can solve directly for the remaining weights. Given original output $Y=XW^\top$, least squares yields
 
 $$
 \boxed{\widetilde W_S^\top=X_S^\dagger Y},
@@ -268,7 +304,7 @@ so the loss becomes **0.0025**. Here $H=X^\top X=\begin{bmatrix}2&2.1\\2.1&2.21\
 
 *Figure 4. Highly correlated input features produce a narrow low-loss valley. Deleting $w_2$ is inexpensive if $w_1$ is allowed to move along that valley.*
 
-You can verify the numbers independently:
+The calculation can be reproduced in PyTorch:
 
 ```python
 import torch
@@ -285,24 +321,26 @@ print(f"naive = {err(naive):.4f}; refit = {err(refit):.4f}; w1 = {w1:.2f}")
 
 ## 3. Recovery fine-tuning and sparse deployment
 
-After selecting a support, **fixed-mask fine-tuning** optimizes only its surviving effective connections. Parameterize the pruned layer as
+Once the sparse support has been chosen and locally reconstructed, **fine-tuning recovers task-level behavior across the network**. The remaining weights can adapt together, including compensation across different layers.
+
+Keep the mask fixed while optimizing new trainable weights $\theta_{nk}$:
 
 $$
 \widetilde w_{nk}=m_{nk}\theta_{nk},\qquad
-\min_\theta\mathcal L(m\odot\theta).
+\boxed{\min_\theta\mathcal L(m\odot\theta)}.
 $$
 
-If $g_{bn}=\partial\mathcal L/\partial y_{bn}$, then by the chain rule
+Let $g_{bn}=\partial\mathcal L/\partial \widetilde y_{bn}$ be the gradient propagated to a linear output. Applying the chain rule,
 
 $$
 \boxed{\frac{\partial\mathcal L}{\partial\theta_{nk}}=m_{nk}x_{bk}g_{bn}}.
 $$
 
-For $m_{nk}=0$, the *effective* weight and its task gradient remain zero. This is why the mask must stay in the forward graph during training. Merely overwriting weights with zero once is insufficient: subsequent optimizer steps may make them nonzero. Optimizer momentum or weight decay can modify the underlying $\theta$, but a fixed forward mask preserves the effective zero pattern.
+The mask participates in both the forward pass and the backward graph. Surviving connections receive gradients and are optimized; removed connections stay zero in the effective computation. In code, the essential operation is `effective_weight = weight * mask` throughout training.
 
 ![Mask and gradient masking during fine-tuning](figures/05_masked_finetuning.svg)
 
-*Figure 5. The same binary mask filters forward weights and backward gradients. The example is independent of optimizer choice.*
+*Figure 5. The fixed mask defines the subnetwork that learns during recovery: retained positions are optimized, and removed connections remain absent.*
 
 There are three useful recovery objectives, which can also be combined:
 
@@ -314,7 +352,7 @@ There are three useful recovery objectives, which can also be combined:
 
 For a language model, a common full-model objective is $\mathcal L=\lambda_{\rm CE}\mathcal L_{\rm CE}+\lambda_{\rm KD}\mathcal L_{\rm KD}$, where $p^T_{bv}=\operatorname{softmax}_v(z^T_{bv}/T)$ and $p^S_{bv}=\operatorname{softmax}_v(z^S_{bv}/T)$; then $\mathcal L_{\rm KD}=T^2\sum_{b,v}p^T_{bv}\log[p^T_{bv}/p^S_{bv}]$. A token-weighted average can be applied in implementation. Unlike layer-wise regression, full-model fine-tuning lets *other layers* compensate for the removed connections.
 
-The code below uses PyTorch pruning reparameterization to keep the **2:4 mask fixed during training**, recovering the pruned student against a frozen teacher. It runs on CPU or GPU and uses synthetic data solely to demonstrate mechanics.
+The example below implements **2:4 pruning followed by teacher-guided recovery**. The dense teacher supplies the target outputs, while the student learns under a fixed 2:4 mask. The script reports reconstruction MSE before and after fine-tuning.
 
 ```python
 import copy
@@ -363,11 +401,11 @@ for layer in student.modules():
         prune.remove(layer, "weight")
 ```
 
-**Practical order.** Choose the deployment pattern first; calibrate using representative activations; select the mask and optionally reconstruct its weights; evaluate the immediate loss increase; fine-tune with the support fixed; export to a supported compressed sparse tensor or a physically narrower model; measure accuracy, compressed bytes, and GPU latency. At large pruning ratios, iterative prune–recover cycles can be more stable than a single abrupt cut. For strict 2:4 inference, check the pattern *after* recovery. A dense LoRA update merged into a sparse base can violate the pattern, so its deployment needs a sparsity-preserving strategy. `prune.remove()` only materializes zeros; it does not by itself call a sparse GPU kernel [8].
+**From recovered weights to an inference operator.** A practical sequence is: calibrate the model with representative inputs, select the mask, optionally perform OBS/regression compensation, fine-tune while enforcing the selected support, and export the result in the format expected by the target GPU. For 2:4 deployment, validate the two-per-four constraint and pack the trained values and position metadata. For structured pruning, instantiate narrower layers and copy the retained weight slices. The output is a recovered model whose arithmetic and memory footprint match the chosen hardware strategy.
 
 ![Pruning, recovery, and deployment pipeline](figures/08_pipeline.svg)
 
-*Figure 6. Efficient pruning starts with a deployment target, not merely a zero count.*
+*Figure 6. A pruning system combines support selection, error compensation, recovery training, and sparse-kernel deployment.*
 
 ## 4. Extensions: attention and convolution
 
@@ -387,15 +425,15 @@ a_{bhts}=\frac{q_{bthd}\kappa_{bshd}}{\sqrt{D_h}},\quad
 z_{bthd}=\alpha_{bhts}v_{bshd},
 $$
 
-followed by $y_{bto}=z_{bthd}W^O_{ohd}$, summing over $h,d$. There are three distinct sparsity targets: **weight sparsity** inside Q/K/V/output projections, **head pruning** (delete a complete $h$), and **attention-map sparsity** (skip selected token pairs $(t,s)$, which is a different computation-sparsity problem).
+followed by $y_{bto}=z_{bthd}W^O_{ohd}$, summing over $h,d$. These equations identify three useful targets: **projection-weight sparsity** compresses Q/K/V/output matrices; **head pruning** removes complete $h$-indexed blocks; **attention-map sparsity** reduces the set of query–key pairs $(t,s)$ evaluated by an attention kernel.
 
-For structured head pruning, deleting head $h$ means deleting the corresponding **output rows** of $W^Q,W^K,W^V$, the corresponding **input columns** of $W^O$, and updating head reshaping. Merely setting a head's output to zero leaves its original projection cost in place. With grouped-query or multi-query attention, shared KV heads require additional consistency rules.
+For structured head pruning, deleting head $h$ means deleting the corresponding **output rows** of $W^Q,W^K,W^V$, the corresponding **input columns** of $W^O$, and updating head reshaping. A head-pruned implementation slices the corresponding Q/K/V projection rows and output-projection input columns, then updates the reshape and head count. Grouped-query and multi-query attention use a consistent mapping between query heads and their shared KV heads.
 
 ![Correct attention head slicing](figures/06_attention_head_pruning.svg)
 
-*Figure 6. Head pruning decreases the number of concatenated head features sent into the output projection. Residual/model width can remain unchanged.*
+*Figure 7. Head pruning reduces the concatenated head dimension while preserving the surrounding residual/model width.*
 
-Here is a **runnable minimal multi-head attention** implementation that physically removes heads and updates all projection matrices:
+This minimal self-attention implementation physically removes selected heads by slicing Q/K/V and the output projection:
 
 ```python
 import math
@@ -442,11 +480,11 @@ $$
 \boxed{y_{bohu}=x_{bc,h+r,u+s}K_{ocrs}}.
 $$
 
-Here $c$ is the input channel, $o$ the output channel, and $r,s$ kernel offsets; the repeated $c,r,s$ indices are summed. Individual entries $K_{ocrs}$ can be pruned, but structured **filter pruning** deletes an entire output-channel slice $K_{o:::}$. The output channel disappears from the feature map, so the next convolution must remove the matching **input-channel** slice. BatchNorm channels, residual branches, concatenations and grouped/depthwise convolutions require additional coordination in real architectures.
+Here $c$ is the input channel, $o$ the output channel, and $r,s$ kernel offsets; the repeated $c,r,s$ indices are summed. Individual entries $K_{ocrs}$ can be pruned, but structured **filter pruning** deletes an entire output-channel slice $K_{o:::}$. The output channel disappears from the feature map, so the next convolution must remove the matching **input-channel** slice. The same channel mapping propagates through dependent BatchNorm layers, residual branches, concatenations, and grouped/depthwise convolutions.
 
 ![CNN channel slicing across successive layers](figures/07_cnn_channel_pruning.svg)
 
-*Figure 7. For physical channel pruning, the retained output-channel indices of Conv1 must be used to slice Conv2's input-channel dimension.*
+*Figure 8. Conv1's retained output-channel indices determine Conv2's retained input-channel slices, producing two smaller convolution operators.*
 
 For a simple two-convolution chain, channel pruning can be implemented with tensor slicing, without any sparse matrix library:
 
@@ -475,7 +513,7 @@ assert y.shape == (2, 16, 32, 32)
 
 For CNNs, channel selection may also use activation statistics, first/second-order loss estimates, or sparse regression followed by least-squares reconstruction [7]. Attention heads can be scored using group norms or their effect on a validation loss; head-level redundancy has been investigated directly [9].
 
-**Summary.** A pruning method has three distinct design decisions: the **support/structure** (arbitrary elements, 2:4, blocks, channels, heads), the **score and compensation rule** (magnitude, activation-aware, curvature, regression), and the **recovery/deployment method** (fixed-mask fine-tuning, distillation, compressed sparse kernels, or smaller dense tensors). Numerical sparsity alone is not a GPU performance metric.
+**Takeaway.** A complete pruning method specifies its **sparse operator** (CSR, blocks, 2:4, or smaller dense tensors), its **support-selection rule** (magnitude, activations, or curvature), its **weight recovery** (regression, OBS compensation, fine-tuning, or distillation), and its **GPU implementation**. Together, these choices turn model redundancy into reduced storage, reduced arithmetic, and faster execution.
 
 **References:** [1] [NVIDIA cuSPARSELt](https://docs.nvidia.com/cuda/cusparselt/) and its [2:4 explanation](https://developer.nvidia.com/blog/exploiting-ampere-structured-sparsity-with-cusparselt/); [2] [PyTorch semi-structured sparse tensors](https://docs.pytorch.org/docs/stable/sparse.html); [3] [NVIDIA cuSPARSE](https://docs.nvidia.com/cuda/cusparse/index.html); [4] [Wanda (ICLR 2024)](https://proceedings.iclr.cc/paper_files/paper/2024/hash/14c856c7a41297804de4c4890e846b25-Abstract-Conference.html); [5] [Optimal Brain Surgeon (1993)](https://authors.library.caltech.edu/records/tzehb-vz706); [6] [SparseGPT (2023)](https://arxiv.org/abs/2301.00774); [7] [Channel Pruning via LASSO and Reconstruction (ICCV 2017)](https://openaccess.thecvf.com/content_iccv_2017/html/He_Channel_Pruning_for_ICCV_2017_paper.html); [8] [PyTorch `prune.remove`](https://docs.pytorch.org/docs/stable/generated/torch.nn.utils.prune.remove.html); [9] [Are Sixteen Heads Really Better than One? (NeurIPS 2019)](https://mlanthology.org/neurips/2019/michel2019neurips-sixteen/).
 
