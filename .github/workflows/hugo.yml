@@ -56,6 +56,9 @@ jobs:
           hugo \
             --minify \
             --baseURL "${{ steps.pages.outputs.base_url }}/"
+      - name: Verify long-form code block rendering
+        run: python3 scripts/check_longform_code.py
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

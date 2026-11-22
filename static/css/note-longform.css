@@ -342,3 +342,64 @@
         padding: 12px 13px;
     }
 }
+
+
+/* Plain code emitted by layouts/_default/_markup/render-codeblock.html.
+   A single code text node prevents token-level Safari text autosizing. */
+.note-content pre.lecture-code {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    margin: 1.25rem 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid #e2e7ed;
+    border-radius: 6px;
+    background: #f8fafc !important;
+    color: #263346;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    font-size: 13px !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    line-height: 1.55;
+    letter-spacing: normal;
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+    tab-size: 4;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+}
+
+.note-content pre.lecture-code code {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit !important;
+    font-size: inherit !important;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    line-height: inherit !important;
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+}
+
+@media (max-width: 680px) {
+    .note-content pre.lecture-code {
+        padding: 12px 13px;
+        font-size: 12.5px !important;
+    }
+}

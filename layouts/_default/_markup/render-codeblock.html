@@ -1,0 +1,8 @@
+{{- /* Long-form lectures use a plain, uniform code block. */ -}}
+{{- if eq .Page.Params.layout "longform" -}}
+<pre class="lecture-code" tabindex="0"><code{{ with .Type }} class="language-{{ . | htmlEscape }}"{{ end }}>{{ .Inner | htmlEscape | safeHTML }}</code></pre>
+{{- else -}}
+  {{- /* Existing pages retain Hugo/Chroma highlighting. */ -}}
+  {{- $result := transform.HighlightCodeBlock . -}}
+  {{- $result.Wrapped -}}
+{{- end -}}
