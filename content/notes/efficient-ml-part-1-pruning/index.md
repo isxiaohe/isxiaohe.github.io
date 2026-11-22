@@ -535,30 +535,30 @@ for layer in student.modules():
 
 ## 4. Extensions: attention and convolution
 
-**Attention.** Work with one sequence and one head. Let $i$ index query positions, $j$ key/value positions, and $f$ features of the input token. Within the head, $k$ indexes the $D_k$ query/key features and $d$ indexes the $D_v$ value features. The three projections all sum over the input feature $f$.
+**Attention.** Work with one sequence. Let $h$ index attention heads, $i$ query positions, $j$ key/value positions, and $f$ features of the input token. Within each head, $k$ indexes the $D_k$ query/key features and $d$ indexes the $D_v$ value features. The three projections all sum over the input feature $f$.
 
 $$
 \begin{aligned}
-Q_{ik}&=(W_Q)_{kf}x_{if},\\
-K_{jk}&=(W_K)_{kf}x_{jf},\\
-V_{jd}&=(W_V)_{df}x_{jf}.
+Q_{ihk}&=(W_Q)_{hkf}x_{if},\\
+K_{jhk}&=(W_K)_{hkf}x_{jf},\\
+V_{jhd}&=(W_V)_{hdf}x_{jf}.
 \end{aligned}
 $$
 
-For each pair $(i,j)$, the score $S_{ij}$ sums over $k$. If query and key coordinates are independent with zero mean and unit variance, the unscaled dot product has variance $D_k$. Dividing by $\sqrt{D_k}$ makes its variance independent of the width. For the softmax denominator $\ell_i$, use $m$ to sum over all key positions while keeping the query $i$ fixed.
+Compute the attention scores and weights independently for each head. In the equations below, $h$ is held fixed in each product. For each pair $(i,j)$, the score $S_{hij}$ sums over $k$. If query and key coordinates are independent with zero mean and unit variance, the unscaled dot product has variance $D_k$. Dividing by $\sqrt{D_k}$ makes its variance independent of the width. For the softmax denominator $\ell_{hi}$, use $m$ to sum over all key positions for that head and query.
 
 $$
 \begin{aligned}
-S_{ij}&=\frac{Q_{ik}K_{jk}}{\sqrt{D_k}},\\
-\ell_i&=\sum_m \exp(S_{im}),\qquad
-P_{ij}=\frac{\exp(S_{ij})}{\ell_i},\\
-O_{id}&=P_{ij}V_{jd}.
+S_{hij}&=\frac{Q_{ihk}K_{jhk}}{\sqrt{D_k}},\\
+\ell_{hi}&=\sum_m \exp(S_{him}),\qquad
+P_{hij}=\frac{\exp(S_{hij})}{\ell_{hi}},\\
+O_{ihd}&=P_{hij}V_{jhd}.
 \end{aligned}
 $$
 
-The repeated subscripts show the reduction axes directly. The query–key dot product sums over $k$, while the weighted value sum reduces over key positions $j$, leaving query $i$ and output feature $d$.
+The query–key dot product sums over $k$, while the weighted value sum reduces over key positions $j$, leaving query $i$, head $h$, and output feature $d$.
 
-Restore the head label $h$ to combine the results. The output projection contracts both $h$ and $d$, giving $y_{in}=(W_O)_{nhd}O_{ihd}$, where $n$ indexes output features. **Projection-weight sparsity** removes entries in the projection matrices. **Head pruning** removes entire $h$ blocks. **Attention-map sparsity** restricts which query–key pairs contribute to the softmax and value sum.
+The output projection combines heads and their features. In $y_{in}=(W_O)_{nhd}O_{ihd}$, both $h$ and $d$ are summed, leaving query $i$ and model output feature $n$. **Projection-weight sparsity** removes entries in the projection matrices. **Head pruning** removes entire $h$ blocks. **Attention-map sparsity** restricts which query–key pairs contribute to the softmax and value sum.
 
 In standard multi-head attention, each head's softmax depends only on that head's queries and keys. For a retained set $S$, the output becomes $\widetilde y_{in}=\sum_{h\in S}\sum_d (W_O)_{nhd}O_{ihd}$. The smaller matrices compute the same result by keeping the matching **output rows** in Q, K, V and **input columns** in $W_O$. In the example below, $D_k=D_v=D_{\rm head}$, so coordinate $(h,d)$ has flattened index $hD_{\rm head}+d$. With four heads of width eight, retaining heads $0,2,3$ keeps slices $[0,8)$, $[16,24)$, and $[24,32)$. The concatenated width becomes 24, while the output projection still produces the original model width. For grouped-query and multi-query attention, retain a shared key/value head wherever a retained query head still uses it.
 
