@@ -1,7 +1,7 @@
 ---
 title: "Efficient ML — Part I: Pruning and Sparsification"
 date: 2026-11-22
-tldr: "Sparse GPU execution, sparsity patterns, pruning scores, Hessian and regression reconstruction, recovery fine-tuning, with attention/CNN examples and runnable PyTorch code."
+tldr: "Build efficient sparse operators from a trained model: GPU layouts and kernels, importance scores, Hessian-guided compensation, recovery training, and attention/CNN examples."
 tags: ["Efficient ML", "Pruning", "Sparsity", "GPU"]
 series: "Efficient ML"
 series_part: 1
@@ -27,7 +27,7 @@ w\in\mathbb R^{N\times K},\quad
 y\in\mathbb R^{B\times N}.
 $$
 
-Here $b$ indexes examples or tokens, $k$ input features, and $n$ output features. Repeated indices are summed, so the equation corresponds to `torch.einsum("bk,nk->bn", x, w) or `torch.nn.functional.linear(x, w) without bias.
+Here $b$ indexes examples or tokens, $k$ input features, and $n$ output features. Repeated indices are summed, so the equation corresponds to `torch.einsum("bk,nk->bn", x, w)` or `torch.nn.functional.linear(x, w)` without bias.
 
 We will build a complete compression pipeline: **represent and execute sparse operators → choose weights using importance scores → reconstruct and fine-tune the remaining weights → apply the same principles to attention and convolution**. Each stage has a concrete mathematical objective and a corresponding implementation.
 
@@ -43,7 +43,7 @@ The next step is to turn that mask into an efficient operator. There are two pri
 
 ![Dense, unstructured, block, 2:4, and structured pruning patterns](figures/01_sparsity_patterns.svg)
 
-*Figure 1. Five patterns, with the same conceptual input/output axes. A channel-pruned matrix has fewer rows; it is not merely a large matrix with zeroed rows.*
+*Figure 1. Five ways to represent a smaller computation, from arbitrary zeros to physically reduced matrix dimensions.*
 
 **Unstructured sparsity and CSR.** Let $\Omega_n$ denote the surviving input indices for output channel $n$:
 
@@ -141,7 +141,7 @@ A pattern can be unstructured, block-sparse, $N{:}M$ sparse, or structured along
 
 *Figure 3. Dense GEMM computes regular full tiles; CSR SpMM gathers packed nonzeros; 2:4 sparse MMA combines fixed sparsity metadata with specialized Tensor Core computation.*
 
-The kernel determines how arithmetic reduction translates into time savings. For example, if a workload spends 70% of its time in a GEMM that becomes twice as fast, Amdahl's law gives an overall acceleration of $1/(0.30+0.70/2)\approx1.54\times$. This also motivates benchmarking **prefill and decode separately** in language models. NVIDIA supplies general sparse operations through cuSPARSE and specialized 2:4 sparse GEMM through cuSPARSELt [1,3].
+The kernel turns arithmetic reduction into runtime speedup. For example, if a workload spends 70% of its time in a GEMM that becomes twice as fast, Amdahl's law gives an overall acceleration of $1/(0.30+0.70/2)\approx1.54\times$. This also motivates benchmarking **prefill and decode separately** in language models. NVIDIA supplies general sparse operations through cuSPARSE and specialized 2:4 sparse GEMM through cuSPARSELt [1,3].
 
 The next experiment compares two implementations of the same pruned linear operator: a dense tensor containing zeros and a packed 2:4 sparse tensor. It verifies the outputs and benchmarks both GPU execution paths.
 
