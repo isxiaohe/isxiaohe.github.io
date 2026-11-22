@@ -105,9 +105,13 @@ $$
 
 For example, $[0.8,0.05,-0.6,0.02]$ is packed as values $[0.8,-0.6]$ with position metadata $[0,2]$. The contribution to one output is $0.8x_{b,4g}-0.6x_{b,4g+2}$. A Sparse Tensor Core executes this pattern at the level of matrix tiles, using a compact, regular representation of both values and positions [1,2].
 
-![2:4 packed weights, position metadata, and selected activations](figures/03_2to4_compression.svg)
-
-*Figure 2. Two surviving values and their positions form a compact unit that Sparse Tensor Core instructions can process directly.*
+<figure class="note-diagram note-diagram-2to4">
+  <picture>
+    <source media="(max-width: 680px)" srcset="figures/03_2to4_matrix_mobile.svg">
+    <img src="figures/03_2to4_compression.svg" alt="Dense weight matrix transformed into a 2:4 sparse matrix. Each four-column group retains two nonzero entries. The final representation stores retained values and their position metadata.">
+  </picture>
+  <figcaption><strong>Figure 2.</strong> 2:4 sparsity is applied independently to every group of four weights along the reduction dimension. The packed format stores two values and their locations per group.</figcaption>
+</figure>
 
 For an FP16 linear layer, 2:4 pruning retains half of the effective weight multiplications. A supported PyTorch packed 2:4 representation occupies **9/16 of the dense weight storage**, including metadata [2]. Consider a $4096\times4096$ FP16 weight matrix: dense storage is 32 MiB, while the documented packed representation requires about 18 MiB. For a batch dimension $B=1024$, the dense contraction performs approximately **17.18 billion multiply–accumulates (MACs)**; 2:4 sparse arithmetic uses **8.59 billion**. This is the arithmetic and storage budget the specialized kernel exploits.
 
@@ -199,28 +203,54 @@ A scoring rule approximates the increase in loss when a parameter or group is re
 
 Here are the principal score families:
 
-| Method | Importance of an individual weight | Interpretation |
-|---|---|---|
-| Magnitude | $s_{nk}=|w_{nk}|$ | Weight size; no data dependence |
-| Wanda-style | $s_{nk}=|w_{nk}|\sqrt{\sum_b x_{bk}^2}$ | Weight magnitude weighted by observed input scale |
-| First-order | $s_i=|w_i g_i|$ | Magnitude of local task-loss change if deleted |
-| OBD | $s_p\approx \tfrac12H_{pp}w_p^2$ | Curvature cost when only that weight changes |
-| OBS | $s_p\approx w_p^2/[2(H^{-1})_{pp}]$ | Minimum quadratic cost *after* optimizing other weights |
+<div class="score-catalog" role="list" aria-label="Comparison of pruning importance scores">
+  <div class="score-row" role="listitem">
+    <div class="score-name">Magnitude</div>
+    <div class="score-formula">$s_{nk}=\lvert w_{nk}\rvert$</div>
+    <div class="score-desc">Keep weights with large absolute magnitude.</div>
+  </div>
+  <div class="score-row" role="listitem">
+    <div class="score-name">Wanda-style</div>
+    <div class="score-formula">$s_{nk}=\lvert w_{nk}\rvert\sqrt{\sum_b x_{bk}^{\,2}}$</div>
+    <div class="score-desc">Weight magnitude scaled by the input feature's activation energy.</div>
+  </div>
+  <div class="score-row" role="listitem">
+    <div class="score-name">First-order</div>
+    <div class="score-formula">$s_i=\lvert w_i g_i\rvert$</div>
+    <div class="score-desc">Approximate task-loss change under weight removal.</div>
+  </div>
+  <div class="score-row" role="listitem">
+    <div class="score-name">OBD</div>
+    <div class="score-formula">$s_p\simeq \tfrac12 H_{pp}w_p^2$</div>
+    <div class="score-desc">Second-order cost of deleting one weight with others fixed.</div>
+  </div>
+  <div class="score-row" role="listitem">
+    <div class="score-name">OBS</div>
+    <div class="score-formula">$s_p\simeq \frac{w_p^2}{2(H^{-1})_{pp}}$</div>
+    <div class="score-desc">Minimum quadratic loss increase after optimal compensation.</div>
+  </div>
+</div>
 
 A compact implementation of magnitude and activation-aware scoring is:
 
 ```python
 import torch
-# Calibration activations X: [B, K]; linear weight W: [N, K].
-B, K, N = 128, 16, 8
-X, W = torch.randn(B, K), torch.randn(N, K)
-magnitude = W.abs()
-wanda = W.abs() * X.square().sum(dim=0).sqrt()[None, :]
 
-# Per-output, 50%-sparse mask from Wanda scores.
-keep = wanda.topk(k=K // 2, dim=1).indices
-mask = torch.zeros_like(W).scatter_(1, keep, 1)
-assert (mask == 0).float().mean() == 0.5
+# Calibration activations X: [B, K]; weights W: [N, K]
+B, K, N = 128, 16, 8
+X = torch.randn(B, K)
+W = torch.randn(N, K)
+
+magnitude = W.abs()
+input_scale = X.square().sum(dim=0).sqrt()  # [K]
+wanda = magnitude * input_scale[None, :]    # [N, K]
+
+# Keep the top 50% in each output row
+keep = wanda.topk(K // 2, dim=-1).indices
+mask = torch.zeros_like(W)
+mask.scatter_(1, keep, 1.0)
+
+assert (mask == 0).float().mean().item() == 0.5
 ```
 
 The Wanda score follows directly from the linear contraction. If we delete one weight at a fixed $(n,k)$, then $\Delta y_{bn}=-x_{bk}w_{nk}$, and the output-change norm over calibration examples is $|w_{nk}|\lVert x_{:k}\rVert_2$. Magnitude ranks the weight itself; Wanda ranks its observed contribution under the input distribution [4].

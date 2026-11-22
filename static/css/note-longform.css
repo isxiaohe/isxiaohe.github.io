@@ -200,3 +200,145 @@
         font-size: 1.3rem;
     }
 }
+
+/* Long-form lecture-note code: a quiet, scrollable technical listing. */
+.note-content .highlight {
+    max-width: 100%;
+    min-width: 0;
+    margin: 1.2rem 0;
+    overflow: hidden;
+    border: 1px solid #e2e7ed;
+    border-radius: 6px;
+    background: #f8fafc !important;
+}
+
+.note-content pre {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 1.2rem 0;
+    padding: 14px 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    background: #f8fafc !important;
+    border: 1px solid #e2e7ed;
+    border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1.55;
+    white-space: pre;
+    overflow-wrap: normal;
+    word-break: normal;
+    tab-size: 4;
+}
+
+.note-content .highlight pre {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+.note-content pre code,
+.note-content .highlight pre code {
+    font: inherit;
+    font-weight: 400 !important;
+    font-style: normal !important;
+    padding: 0;
+    background: transparent;
+}
+
+/* Override Chroma's inline bold/italic token styling, preserving its colors. */
+.note-content .highlight pre span {
+    font-weight: 400 !important;
+    font-style: normal !important;
+}
+
+/* Responsive score catalog: its math remains intact inside a semantic row. */
+.note-content .score-catalog {
+    margin: 1.3rem 0 1.6rem;
+    border-top: 1px solid #dfe5ec;
+    border-bottom: 1px solid #dfe5ec;
+}
+
+.note-content .score-row {
+    display: grid;
+    grid-template-columns: minmax(7rem, .9fr) minmax(12rem, 1.45fr) minmax(10rem, 1.55fr);
+    align-items: center;
+    gap: 14px;
+    padding: 12px 4px;
+    border-bottom: 1px solid #e8ecf0;
+}
+
+.note-content .score-row:last-child {
+    border-bottom: 0;
+}
+
+.note-content .score-row > * {
+    min-width: 0;
+}
+
+.note-content .score-name {
+    font-weight: 700;
+    line-height: 1.45;
+}
+
+.note-content .score-formula {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    padding: 5px 0;
+    line-height: 1.6;
+    scrollbar-width: thin;
+}
+
+.note-content .score-desc {
+    color: #515d6a;
+    font-size: .91em;
+    line-height: 1.55;
+}
+
+/* Responsive SVG diagrams use a separate, legible mobile composition. */
+.note-content .note-diagram {
+    margin: 1.7rem 0;
+}
+
+.note-content .note-diagram picture,
+.note-content .note-diagram img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.note-content .note-diagram figcaption {
+    margin-top: .65rem;
+    color: var(--text-muted);
+    font-size: .87em;
+    line-height: 1.55;
+}
+
+@media (max-width: 680px) {
+    .note-content .score-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2px;
+        padding: 12px 2px;
+    }
+
+    .note-content .score-formula {
+        font-size: 1rem;
+        padding: 4px 0;
+    }
+
+    .note-content .score-desc {
+        font-size: .9rem;
+    }
+
+    .note-content pre {
+        font-size: 12.5px;
+        line-height: 1.55;
+        padding: 12px 13px;
+    }
+}
