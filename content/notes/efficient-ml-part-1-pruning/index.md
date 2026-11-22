@@ -21,13 +21,13 @@ downloads:
 Start with one input vector $x\in\mathbb R^K$. A linear layer without bias maps it to $y\in\mathbb R^N$:
 
 $$
-\boxed{y^n=W^n{}_k x^k}
-=\sum_{k=0}^{K-1}W^n{}_k x^k.
+\boxed{y_n=W_{nk}x_k}
+=\sum_{k=0}^{K-1}W_{nk}x_k.
 $$
 
-In **Einstein summation notation**, an index that occurs twice in a product, once up and once down, is summed over its full range when the sum is implicit. Here $k$ runs over input features, and $n$ is the free output index. In a contraction, each free index appears once per term and labels an entry of the result. We write sums explicitly for restricted ranges and sample aggregates. When reading a stored entry, the ordinary array subscript $W_{nk}$ denotes the same value as $W^n{}_k$ in these Euclidean coordinates.
+We use **Einstein summation with array subscripts**. In an indexed product, a subscript that occurs twice is summed over its full range when it is neither fixed nor explicitly summed. Here $k$ runs over input features and disappears after the sum. The free subscript $n$ labels the output and stays on both sides. We write the sum explicitly when its range is restricted or when it helps to show which samples or positions are being aggregated.
 
-For a batch, add a sample label $b$ to the input and output, giving $Y_b{}^n=W^n{}_k X_b{}^k$. The label $b$ is free, so each sample is transformed independently by the same weights. With samples stored as rows, $Y=XW^\top$ for $X\in\mathbb R^{B\times K}$ and $W\in\mathbb R^{N\times K}$. The matching PyTorch calls are `torch.einsum("bk,nk->bn", X, W)` and `torch.nn.functional.linear(X, W)`.
+For a batch, add a sample label $b$ to the input and output, giving $Y_{bn}=W_{nk}X_{bk}$. The free label $b$ shows that each sample uses the same weight matrix independently. With samples stored as rows, $Y=XW^\top$ maps $X\in\mathbb R^{B\times K}$ to $Y\in\mathbb R^{B\times N}$ using $W\in\mathbb R^{N\times K}$. The matching PyTorch calls are `torch.einsum("bk,nk->bn", X, W)` and `torch.nn.functional.linear(X, W)`.
 
 We will build a complete compression pipeline: **represent and execute sparse operators → choose weights using importance scores → reconstruct and fine-tune the remaining weights → apply the same principles to attention and convolution**. Each stage has a concrete mathematical objective and a corresponding implementation.
 
@@ -36,7 +36,7 @@ We will build a complete compression pipeline: **represent and execute sparse op
 For each connection $(n,k)$, let the binary mask entry $M_{nk}$ indicate whether that weight is retained. The elementwise product $\widetilde W=M\odot W$ defines the effective weights. The single-input contraction becomes
 
 $$
-\widetilde y^n=\widetilde W^n{}_k x^k.
+\widetilde y_n=\widetilde W_{nk}x_k.
 $$
 
 The next step is to turn that mask into an efficient operator. There are two principal strategies. **Sparse execution** retains the original tensor dimensions and processes packed nonzero weights. **Structured pruning** removes entire dimensions, giving a smaller dense operator. Block sparsity and $N{:}M$ sparsity provide intermediate, GPU-friendly structures.
@@ -49,13 +49,13 @@ The next step is to turn that mask into an efficient operator. There are two pri
 
 $$
 \Omega_n=\{k:\widetilde W_{nk}\neq0\},\qquad
-\boxed{\widetilde y^n=\sum_{k\in\Omega_n}\widetilde W_{nk}x^k}.
+\boxed{\widetilde y_n=\sum_{k\in\Omega_n}\widetilde W_{nk}x_k}.
 $$
 
 **Compressed sparse row (CSR)** packs the rows consecutively. Row $n$ starts at offset $r_n$ and contains $r_{n+1}-r_n$ entries. The last offset $r_N$ is the total number of nonzeros. At each packed position $p$ in row $n$, the stored column $c_p$ tells us which input to read, and the stored value is $v_p=\widetilde W_{n,c_p}$. Substituting $k=c_p$ into the restricted sum gives
 
 $$
-\boxed{\widetilde y^n=\sum_{p=r_n}^{r_{n+1}-1}v_p x^{c_p}}.
+\boxed{\widetilde y_n=\sum_{p=r_n}^{r_{n+1}-1}v_p x_{c_p}}.
 $$
 
 For example,
@@ -72,7 +72,7 @@ c=[0,3,1,0,2],\quad
 r=[0,2,3,5].
 $$
 
-For output channel $n=0$, the offsets $r_0=0$ and $r_1=2$ give $p=0,1$. Their columns are $0,3$, so $\widetilde y^0=x^0+2x^3$, where $0$ and $3$ are feature indices. Different output rows or tiles can be processed by different GPU warps. Each warp reads the packed weight values, gathers the corresponding activations, and accumulates the products. Block-sparse kernels organize the surviving values into contiguous tiles to give the GPU larger units of work.
+For output channel $n=0$, the offsets $r_0=0$ and $r_1=2$ give $p=0,1$. Their columns are $0,3$, so $\widetilde y_0=x_0+2x_3$. Different output rows or tiles can be processed by different GPU warps. Each warp reads the packed weight values, gathers the corresponding activations, and accumulates the products. Block-sparse kernels organize the surviving values into contiguous tiles to give the GPU larger units of work.
 
 A direct PyTorch implementation of the same operation is:
 
@@ -97,13 +97,13 @@ $$
 \boxed{\sum_{r=0}^{3}M_{n,4g+r}=2}.
 $$
 
-Rewrite the dense contraction as $\sum_g\sum_{r=0}^{3}\widetilde W_{n,4g+r}x^{4g+r}$. Two of the mask entries in each inner sum are zero. Label the other two offsets $j_{ng0},j_{ng1}$ and store their values as $v_{ngq}=W_{n,4g+j_{ngq}}$. The inner sum now visits only the two packed slots $q$.
+Rewrite the dense contraction as $\sum_g\sum_{r=0}^{3}\widetilde W_{n,4g+r}x_{4g+r}$. Two of the mask entries in each inner sum are zero. Label the other two offsets $j_{ng0},j_{ng1}$ and store their values as $v_{ngq}=W_{n,4g+j_{ngq}}$. The inner sum now visits only the two packed slots $q$.
 
 $$
-\boxed{\widetilde y^n=\sum_g\sum_{q=0}^{1}v_{ngq}\,x^{4g+j_{ngq}}}.
+\boxed{\widetilde y_n=\sum_g\sum_{q=0}^{1}v_{ngq}\,x_{4g+j_{ngq}}}.
 $$
 
-For example, $[0.8,0.05,-0.6,0.02]$ is packed as values $[0.8,-0.6]$ with position metadata $[0,2]$. The contribution to one output is $0.8x^{4g}-0.6x^{4g+2}$. A Sparse Tensor Core executes this pattern at the level of matrix tiles, using a compact, regular representation of both values and positions [1,2].
+For example, $[0.8,0.05,-0.6,0.02]$ is packed as values $[0.8,-0.6]$ with position metadata $[0,2]$. The contribution to one output is $0.8x_{4g}-0.6x_{4g+2}$. A Sparse Tensor Core executes this pattern at the level of matrix tiles, using a compact, regular representation of both values and positions [1,2].
 
 <figure class="note-diagram note-diagram-2to4">
   <picture>
@@ -120,10 +120,10 @@ Dense execution accumulates $K$ products for every one of the $BN$ output entrie
 **Structured pruning** reduces the size of a tensor dimension. In a two-layer MLP, $k$ labels input features, $i$ labels hidden units, and $n$ labels output features. With elementwise activation $\phi$,
 
 $$
-h^i=\phi(A^i{}_k x^k),\qquad y^n=U^n{}_i h^i.
+h_i=\phi(A_{ik}x_k),\qquad y_n=U_{ni}h_i.
 $$
 
-If the retained hidden indices form a set $S$, the pruned output is $\widetilde y^n=\sum_{i\in S}U^n{}_i h^i$. Keep row $i$ of $A$ to compute each $h^i$ for $i\in S$ and column $i$ of $U$ to use it. Reindexing both matrices in the same order gives $\widetilde A\in\mathbb R^{|S|\times K}$ and $\widetilde U\in\mathbb R^{N\times|S|}$. With $I$ original hidden units, the parameter count goes from $I(K+N)$ to $|S|(K+N)$. For $B$ samples, the two dense multiplications require $B|S|(K+N)$ MACs instead of $BI(K+N)$.
+If the retained hidden indices form a set $S$, the pruned output is $\widetilde y_n=\sum_{i\in S}U_{ni}h_i$. Keep row $i$ of $A$ to compute each $h_i$ for $i\in S$ and column $i$ of $U$ to use it. Reindexing both matrices in the same order gives $\widetilde A\in\mathbb R^{|S|\times K}$ and $\widetilde U\in\mathbb R^{N\times|S|}$. With $I$ original hidden units, the parameter count goes from $I(K+N)$ to $|S|(K+N)$. For $B$ samples, the two dense multiplications require $B|S|(K+N)$ MACs instead of $BI(K+N)$.
 
 **Measuring sparsity and performance.** We describe a compressed operator using both its zero fraction and the regularity of its structure:
 
@@ -218,17 +218,17 @@ The table summarizes the scores derived below. Here $b$ indexes calibration samp
   </div>
   <div class="score-row" role="listitem">
     <div class="score-name">First-order</div>
-    <div class="score-formula">$s_i=\lvert w^i g_i\rvert$</div>
+    <div class="score-formula">$s_i=\lvert w_i g_i\rvert$</div>
     <div class="score-desc">Approximate task-loss change under weight removal.</div>
   </div>
   <div class="score-row" role="listitem">
     <div class="score-name">Optimal Brain Damage (OBD)</div>
-    <div class="score-formula">$s_p\simeq \tfrac12 H_{pp}(w^p)^2$</div>
+    <div class="score-formula">$s_p\simeq \tfrac12 H_{pp}w_p^2$</div>
     <div class="score-desc">Second-order cost of deleting one weight with others fixed.</div>
   </div>
   <div class="score-row" role="listitem">
     <div class="score-name">Optimal Brain Surgeon (OBS)</div>
-    <div class="score-formula">$s_p\simeq \frac{(w^p)^2}{2(H^{-1})^{pp}}$</div>
+    <div class="score-formula">$s_p\simeq \frac{w_p^2}{2(H^{-1})_{pp}}$</div>
     <div class="score-desc">Minimum quadratic loss increase after optimal compensation.</div>
   </div>
 </div>
@@ -257,7 +257,7 @@ assert (mask == 0).float().mean().item() == 0.5
 
 ### From a deleted weight to the Wanda score
 
-Fix a connection $(n,k)$. Setting $W_{nk}$ to zero subtracts the single contribution $W_{nk}x^k$ from output feature $n$ for one input $x$. To score this deletion across the calibration set, restore the sample label $b$ and take the norm of the changes in column $n$ of $Y$:
+Fix a connection $(n,k)$. Setting $W_{nk}$ to zero subtracts the single contribution $W_{nk}x_k$ from output feature $n$ for one input $x$. To score this deletion across the calibration set, restore the sample label $b$ and take the norm of the changes in column $n$ of $Y$:
 
 $$
 \begin{aligned}
@@ -271,76 +271,76 @@ This gives the Wanda score. If all input columns have the same norm, it ranks we
 
 ### Taylor expansion and the first-order score
 
-Flatten the selected weights into a vector $w$, with $i,j$ indexing its coordinates. Write a nonzero perturbation as $\Delta w=\varepsilon u$, where $\varepsilon=\|\Delta w\|_2$ is the step size and $u$ is its unit direction. Define $f(t)=\mathcal L(w+tu)$, so the loss change is $f(\varepsilon)-f(0)$. For a twice continuously differentiable loss, the chain rule first gives $f'(t)=u^i\,\partial_i\mathcal L(w+tu)$, with $\partial_i=\partial/\partial w^i$. Differentiating again along $u$ and evaluating at zero gives
+Flatten the selected weights into a vector $w$, with $i,j$ indexing its coordinates. Write a nonzero perturbation as $\Delta w=\varepsilon u$, where $\varepsilon=\|\Delta w\|_2$ is the step size and $u$ is its unit direction. Define $f(t)=\mathcal L(w+tu)$, so the loss change is $f(\varepsilon)-f(0)$. For a twice continuously differentiable loss, the chain rule first gives $f'(t)=u_i\,\partial_i\mathcal L(w+tu)$, with $\partial_i=\partial/\partial w_i$. Differentiating again along $u$ and evaluating at zero gives
 
 $$
 \begin{aligned}
-f'(0)&=g_i u^i,
-&g_i&=\left.\frac{\partial\mathcal L}{\partial w^i}\right|_w,\\
-f''(0)&=H_{ij}u^i u^j,
+f'(0)&=g_i u_i,
+&g_i&=\left.\frac{\partial\mathcal L}{\partial w_i}\right|_w,\\
+f''(0)&=H_{ij}u_i u_j,
 &H_{ij}&=\left.\frac{\partial^2\mathcal L}
-{\partial w^i\,\partial w^j}\right|_w.
+{\partial w_i\,\partial w_j}\right|_w.
 \end{aligned}
 $$
 
-The one-variable Taylor expansion at $t=0$ gives $f(\varepsilon)-f(0)=\varepsilon f'(0)+\tfrac12\varepsilon^2 f''(0)+o(\varepsilon^2)$. Each factor $\varepsilon u^i$ is the change $\Delta w^i$ in coordinate $i$. Substituting gives
+The one-variable Taylor expansion at $t=0$ gives $f(\varepsilon)-f(0)=\varepsilon f'(0)+\tfrac12\varepsilon^2 f''(0)+o(\varepsilon^2)$. Each factor $\varepsilon u_i$ is the change $\Delta w_i$ in coordinate $i$. Substituting gives
 
 $$
 \begin{aligned}
 \Delta\mathcal L
 &=\mathcal L(w+\Delta w)-\mathcal L(w)\\
-&=g_i\Delta w^i
-+\tfrac12 H_{ij}\Delta w^i\Delta w^j
+&=g_i\Delta w_i
++\tfrac12 H_{ij}\Delta w_i\Delta w_j
 +o(\|\Delta w\|_2^2).
 \end{aligned}
 $$
 
-At a differentiable unconstrained local minimum of this loss, each one-dimensional function $t\mapsto\mathcal L(w+t e_i)$ has a minimum at $t=0$. Its derivative there is $g_i=0$, so the linear term vanishes. Here $e_i$ is the unit vector in coordinate $i$. For a trained checkpoint, $g$ may only be small, and it must be computed for the same objective used in the expansion. Dropping the linear term is justified for a candidate perturbation when $|g^\top\Delta w|$ is negligible at the accuracy required, for example when it is much smaller than $\tfrac12|\Delta w^\top H\Delta w|$. A small gradient by itself does not establish that comparison, and deleting a large weight can also make the Taylor remainder important.
+At a differentiable unconstrained local minimum of this loss, varying any one weight $w_i$ while holding the others fixed gives a one-variable function with a minimum at the current value of $w_i$. Its derivative there is $g_i=0$, so the linear term vanishes. For a trained checkpoint, $g$ may only be small, and it must be computed for the same objective used in the expansion. For a candidate perturbation, compare $|g_i\Delta w_i|$ with $\tfrac12|H_{ij}\Delta w_i\Delta w_j|$ before dropping the linear term. Deleting a large weight can also make the Taylor remainder important.
 
-Fix the candidate coordinate $p$. Setting its weight to zero gives $\Delta w^p=-w^p$ and $\Delta w^i=0$ for $i\ne p$. Only the $p$ term of the linear contraction survives. The predicted change is $-g_p w^p$, which can be positive or negative away from stationarity. A first-order rule can rank deletions by its magnitude $|g_pw^p|$.
+Fix the candidate coordinate $p$. Setting its weight to zero gives $\Delta w_p=-w_p$ and $\Delta w_i=0$ for $i\ne p$. Only the $p$ term of the linear contraction survives. The predicted change is $-g_p w_p$, which can be positive or negative away from stationarity. A first-order rule can rank deletions by its magnitude $|g_pw_p|$.
 
 ### Optimal Brain Damage and Optimal Brain Surgeon
 
-**Optimal Brain Damage (OBD).** In the quadratic approximation near stationarity, first evaluate the cost of deleting one weight while freezing all others. Fix the candidate $p$ and set $e=e_p$. Its components $e^i=\delta^i{}_p$ equal one for $i=p$ and zero otherwise. The update is $\Delta w^i=-w^p e^i$, so both summed indices of the quadratic term must equal $p$ for a contribution to survive:
+**Optimal Brain Damage (OBD).** In the quadratic approximation near stationarity, first evaluate the cost of deleting one weight while freezing all others. Fix the candidate $p$ and set $e=e_p$. Its components $e_i=\delta_{ip}$ equal one for $i=p$ and zero otherwise. The update is $\Delta w_i=-w_p e_i$, so both summed indices of the quadratic term must equal $p$ for a contribution to survive:
 
 $$
 \begin{aligned}
-s_p^{\rm OBD}
-&=\tfrac12(w^p)^2 H_{ij}e^i e^j\\
-&=\tfrac12 (w^p)^2 H_{pp}.
+s_{p,\rm OBD}
+&=\tfrac12w_p^2 H_{ij}e_i e_j\\
+&=\tfrac12 w_p^2 H_{pp}.
 \end{aligned}
 $$
 
-Rank a smaller $s_p^{\rm OBD}$ as less costly to prune. This single-deletion calculation uses only $H_{pp}$ because the other coordinates were held fixed. When using the scores to predict the total cost of deleting several weights at once, adding them amounts to a diagonal approximation because the quadratic also includes terms with $i\ne j$.
+Rank a smaller $s_{p,\rm OBD}$ as less costly to prune. This single-deletion calculation uses only $H_{pp}$ because the other coordinates were held fixed. When using the scores to predict the total cost of deleting several weights at once, adding them amounts to a diagonal approximation because the quadratic also includes terms with $i\ne j$.
 
-**Optimal Brain Surgeon (OBS).** Freeze the deleted coordinate at its new value of zero and choose the adjustments to all other coordinates that minimize the same quadratic model. Assume $H$ is symmetric positive definite on the parameters being adjusted, so the quadratic is strictly convex and $C=H^{-1}$ exists.
-
-$$
-\min_{\Delta w}\;\tfrac12\Delta w^\top H\Delta w
-\quad\text{subject to }e_p^\top\Delta w=-w^p.
-$$
-
-Add $\lambda(e_p^\top\Delta w+w^p)$ to the objective. Setting the derivative with respect to $\Delta w$ to zero gives $H\Delta w+\lambda e_p=0$. Multiplying by $C$ gives $\Delta w=-\lambda C e_p$. In components, $C^{ip}$ is entry $(i,p)$ of the inverse Hessian and $(C e_p)^i=C^{ip}$ for the fixed $p$. The constraint on coordinate $p$ then fixes the multiplier:
+**Optimal Brain Surgeon (OBS).** Freeze the deleted coordinate at its new value of zero and choose the adjustments to all other coordinates that minimize the same quadratic model. As in OBD, fix the candidate $p$ and use the selector $e_i=\delta_{ip}$. Then $e_i\Delta w_i=\Delta w_p$. Assume $H$ is symmetric positive definite on the parameters being adjusted, so the quadratic is strictly convex and $C=H^{-1}$ exists.
 
 $$
--\lambda C^{pp}=-w^p
+\min_{\Delta w}\;\tfrac12 H_{ij}\Delta w_i\Delta w_j
+\quad\text{subject to }e_i\Delta w_i=-w_p.
+$$
+
+Add $\lambda(e_i\Delta w_i+w_p)$ to the objective. Setting the derivative for each coordinate $i$ to zero gives $H_{ij}\Delta w_j+\lambda e_i=0$. Multiplying by $C_{\ell i}$ and summing over $i$ uses $C_{\ell i}H_{ij}=\delta_{\ell j}$. The result is $\Delta w_\ell=-\lambda C_{\ell i}e_i=-\lambda C_{\ell p}$. Setting $\ell=p$ evaluates the constraint and fixes the multiplier:
+
+$$
+-\lambda C_{pp}=-w_p
 \quad\Longrightarrow\quad
-\lambda=\frac{w^p}{C^{pp}},\qquad
-\boxed{(\Delta w^*)^i=-\frac{w^p}{C^{pp}}C^{ip}}.
+\lambda=\frac{w_p}{C_{pp}},\qquad
+\boxed{(\Delta w^*)_i=-\frac{w_p}{C_{pp}}C_{ip}}.
 $$
 
-To compute the cost, use $H\Delta w^*=-\lambda e_p$ in the quadratic objective:
+To compute the cost, substitute $H_{ij}(\Delta w^*)_j=-\lambda e_i$ into the quadratic objective:
 
 $$
 \begin{aligned}
-s_p^{\rm OBS}
-&=\tfrac12(\Delta w^*)^\top H\Delta w^*\\
-&=-\tfrac12\lambda(\Delta w^*)^p\\
-&=\boxed{\frac{(w^p)^2}{2C^{pp}}}.
+s_{p,\rm OBS}
+&=\tfrac12(\Delta w^*)_i H_{ij}(\Delta w^*)_j\\
+&=-\tfrac12\lambda(\Delta w^*)_p\\
+&=\boxed{\frac{w_p^2}{2C_{pp}}}.
 \end{aligned}
 $$
 
-OBS ranks each deletion by this compensated cost and also gives the update to apply if that weight is deleted. The entries $C^{ip}$ with $i\ne p$ determine how surviving weights move. For diagonal $H$, those entries vanish and $C^{pp}=1/H_{pp}$, so OBS gives the same score as OBD. More generally, keeping all survivors fixed is one feasible OBS update, so the optimized OBS cost cannot exceed the OBD cost for that deletion in the same quadratic model. If the curvature is ill-conditioned, a common approximation uses $H+\mu I$ with damping $\mu$ chosen to make the curvature positive definite and improve conditioning [5].
+OBS ranks each deletion by this compensated cost and also gives the update to apply if that weight is deleted. The entries $C_{ip}$ with $i\ne p$ determine how surviving weights move. For diagonal $H$, those entries vanish and $C_{pp}=1/H_{pp}$, so OBS gives the same score as OBD. More generally, keeping all survivors fixed is one feasible OBS update, so the optimized OBS cost cannot exceed the OBD cost for that deletion in the same quadratic model. If the curvature is ill-conditioned, a common approximation uses $H+\mu I$ with damping $\mu$ chosen to make the curvature positive definite and improve conditioning [5].
 
 ### Layer-wise reconstruction as least squares
 
@@ -352,22 +352,20 @@ $$
 \mathcal L_{\rm rec}(\widetilde W)=\tfrac12\|\widetilde Y-Y\|_F^2.
 $$
 
-Let $\Delta W=\widetilde W-W$. For one input, the residual is $\Delta W^n{}_k x^k$. The loss pools those residuals across all calibration samples $b$ and output features $n$. In the squared residual, label the input feature in the first factor $k$ and the input feature in the second factor $\ell$. Collecting the factors that depend on $b$ gives the Gram matrix $G=X^\top X$:
+Let $\Delta W=\widetilde W-W$. For one input, the residual is $\Delta W_{nk}x_k$. Across the calibration set, the loss sums the squared residual over samples $b$ and output features $n$. Use $k$ and $\ell$ for the two independent feature sums inside each square. Once expanded, the only factors carrying $b$ are the two input entries. Summing over $b$ first gives the Gram matrix $G=X^\top X$:
 
 $$
 \begin{aligned}
 \mathcal L_{\rm rec}
-&=\tfrac12\sum_{b,n}
-   (\Delta W^n{}_k X_b{}^k)
-   (\Delta W^n{}_\ell X_b{}^\ell)\\
-&=\tfrac12\sum_n \Delta W^n{}_k G^{k\ell}\Delta W^n{}_\ell,\\
-G^{k\ell}&=\sum_b X_b{}^k X_b{}^\ell.
+&=\tfrac12(\Delta W_{nk} X_{bk})(\Delta W_{n\ell} X_{b\ell})\\
+&=\tfrac12\Delta W_{nk} G_{k\ell}\Delta W_{n\ell},\\
+G_{k\ell}&=\sum_b X_{bk} X_{b\ell}.
 \end{aligned}
 $$
 
-For a fixed output row $n$, the derivative with respect to $\Delta W^n{}_k$ is $G^{k\ell}\Delta W^n{}_\ell$ because $G$ is symmetric. Differentiating with respect to the weight at input feature $\ell$ gives $G^{k\ell}$. Each row therefore has the same Hessian block $H_{\rm rec}=G$, and mixed derivatives across distinct output rows are zero. This Hessian is exact for the fixed-input reconstruction objective. At $\widetilde W=W$, the residual is zero, so the reconstruction loss is stationary and its Taylor expansion is exactly quadratic.
+For a fixed output row $n$, the derivative with respect to $\Delta W_{nk}$ is $G_{k\ell}\Delta W_{n\ell}$ because $G$ is symmetric. Differentiating with respect to the weight at input feature $\ell$ gives $G_{k\ell}$. Each row therefore has the same Hessian block $H_{\rm rec}=G$, and mixed derivatives across distinct output rows are zero. This Hessian is exact for the fixed-input reconstruction objective. At $\widetilde W=W$, the residual is zero, so the reconstruction loss is stationary and its Taylor expansion is exactly quadratic.
 
-If we delete only $W_{nk}$ and freeze the other weights, its cost is $\tfrac12 W_{nk}^2 G_{kk}=\tfrac12 s_{nk}^2$ for Wanda's score $s_{nk}$. Here $G_{kk}$ is a single diagonal entry for the chosen feature. The off-diagonal entries $G^{k\ell}$ capture how input columns interact, which is what lets other weights compensate. SparseGPT uses this fixed-input objective and second-order weight updates in an efficient blockwise algorithm [6].
+If we delete only $W_{nk}$ and freeze the other weights, its cost is $\tfrac12 W_{nk}^2 G_{kk}=\tfrac12 s_{nk}^2$ for Wanda's score $s_{nk}$. Here $G_{kk}$ is a single diagonal entry for the chosen feature. The off-diagonal entries $G_{k\ell}$ capture how input columns interact, which is what lets other weights compensate. SparseGPT uses this fixed-input objective and second-order weight updates in an efficient blockwise algorithm [6].
 
 After choosing a shared input support $S$, form $X_S$ from the retained columns of $X$. Let $Z=\widetilde W_{:,S}^{\top}$ contain the unknown retained weights. The residual is $X_SZ-Y$, and the gradient of $\tfrac12\|X_SZ-Y\|_F^2$ with respect to $Z$ is $X_S^\top(X_SZ-Y)$. Setting it to zero gives the normal equations.
 
@@ -438,7 +436,7 @@ $$
 \boxed{\min_\Theta\mathcal L(M\odot\Theta)}.
 $$
 
-For one input, the masked layer still computes $\widetilde y^n=\widetilde W^n{}_k x^k$. To differentiate, fix a weight entry $(n,k)$ and write the activation for sample $b$ as $X_{bk}$. Changing $\Theta_{nk}$ changes only output feature $n$, with derivative $M_{nk}X_{bk}$ for that sample. If $g_{bn}=\partial\mathcal L/\partial\widetilde Y_{bn}$ is the upstream gradient, the chain rule adds the contributions from each sample:
+For one input, the masked layer still computes $\widetilde y_n=\widetilde W_{nk} x_k$. To differentiate, fix a weight entry $(n,k)$ and write the activation for sample $b$ as $X_{bk}$. Changing $\Theta_{nk}$ changes only output feature $n$, with derivative $M_{nk}X_{bk}$ for that sample. If $g_{bn}=\partial\mathcal L/\partial\widetilde Y_{bn}$ is the upstream gradient, the chain rule adds the contributions from each sample:
 
 $$
 \frac{\partial\mathcal L}{\partial\Theta_{nk}}
@@ -456,14 +454,14 @@ There are three useful recovery objectives, which can also be combined:
 
 | Objective | Example | What it restores |
 |---|---|---|
-| Local reconstruction | $\lVert h^{\rm sparse}-h^{\rm teacher}\rVert_2^2$ | Internal representations or layer outputs |
-| Teacher distillation | $T^2\operatorname{KL}(p^{\rm teach}\Vert p^{\rm stud})$ | Original model's predictive distribution |
+| Local reconstruction | $\lVert h_{\rm sparse}-h_{\rm teacher}\rVert_2^2$ | Internal representations or layer outputs |
+| Teacher distillation | $T^2\operatorname{KL}(p\Vert q)$ | Original model's predictive distribution |
 | Task loss | Token cross-entropy / supervised target loss | Downstream task quality |
 
-For a language model, start at one token position. Let $v$ index vocabulary entries and $v_*$ be the target entry. The supervised term at this position is $-\log p^{\rm stud}_{v_*}(1)$. Teacher and student both convert their logits $z$ to probabilities at temperature $T>0$ using
+For a language model, start at one token position. Let $v$ index vocabulary entries and $v_*$ be the target entry. Write $p_v(T)$ for the teacher probabilities and $q_v(T)$ for the student probabilities. The supervised term is $-\log q_{v_*}(1)$. Both models convert their own logits $z$ to probabilities at temperature $T>0$ using the same softmax formula:
 
 $$
-p_v(T)=\frac{\exp(z_v/T)}{\sum_u\exp(z_u/T)}.
+\operatorname{softmax}(z/T)_v=\frac{\exp(z_v/T)}{\sum_u\exp(z_u/T)}.
 $$
 
 Now let $t$ enumerate the $N_{\rm tok}$ valid token positions across the batch. Average the per-token KL divergences from teacher to student, and combine the result with the average supervised loss:
@@ -471,14 +469,14 @@ Now let $t$ enumerate the $N_{\rm tok}$ valid token positions across the batch. 
 $$
 \begin{aligned}
 \mathcal L_{\rm KD}
-&=\frac{T^2}{N_{\rm tok}}\sum_{t,v}p^{\rm teach}_{tv}(T)
-\log\frac{p^{\rm teach}_{tv}(T)}{p^{\rm stud}_{tv}(T)},\\
+&=\frac{T^2}{N_{\rm tok}}\sum_{t,v}p_{tv}(T)
+\log\frac{p_{tv}(T)}{q_{tv}(T)},\\
 \mathcal L&=\lambda_{\rm CE}\mathcal L_{\rm CE}+
 \lambda_{\rm KD}\mathcal L_{\rm KD}.
 \end{aligned}
 $$
 
-The teacher probabilities are fixed targets. At a single position, $\log p^{\rm stud}_u(T)=z^{\rm stud}_u/T-\log\sum_j\exp(z^{\rm stud}_j/T)$. Differentiating with respect to $z^{\rm stud}_v$ gives $(\mathbf 1_{u=v}-p^{\rm stud}_v(T))/T$. Multiply by $-p^{\rm teach}_u(T)$ and sum over $u$. Since the teacher probabilities sum to one, the unscaled per-token KL has gradient $(p^{\rm stud}_v(T)-p^{\rm teach}_v(T))/T$. At high $T$, expanding each exponential to first order in $1/T$ makes both distributions approach uniform with deviations of order $1/T$. Their difference and the explicit factor $1/T$ together make the unscaled gradient of order $1/T^2$. Multiplying by $T^2$ offsets this change in scale. With a full-model objective, surviving weights in multiple layers can compensate together.
+The teacher probabilities are fixed targets. At a single position, let $z$ be the student logits, so $\log q_u(T)=z_u/T-\log\sum_j\exp(z_j/T)$. Differentiating with respect to $z_v$ gives $(\mathbf 1_{u=v}-q_v(T))/T$. Multiply by $-p_u(T)$ and sum over $u$. Since the teacher probabilities sum to one, the unscaled per-token KL has gradient $(q_v(T)-p_v(T))/T$. At high $T$, expanding each exponential to first order in $1/T$ makes both distributions approach uniform with deviations of order $1/T$. Their difference and the explicit factor $1/T$ together make the unscaled gradient of order $1/T^2$. Multiplying by $T^2$ offsets this change in scale. With a full-model objective, surviving weights in multiple layers can compensate together.
 
 The example below uses **2:4 pruning followed by teacher-guided recovery** on a toy network. Its teacher supplies continuous outputs, so the student minimizes mean squared error under a fixed 2:4 mask. The script reports that error before and after fine-tuning.
 
@@ -537,29 +535,32 @@ for layer in student.modules():
 
 ## 4. Extensions: attention and convolution
 
-**Attention.** Work with one sequence and one head first. Let $t$ index query positions, $s$ index key/value positions, $k$ index input features, and $d$ index the $D_{\rm head}$ coordinates of the head. The projections contract over $k$. In Euclidean coordinates we write the key with a lower $d$ so it can contract with the query's upper $d$ in the dot product.
+**Attention.** Work with one sequence and one head. Let $i$ index query positions, $j$ key/value positions, and $f$ features of the input token. Within the head, $k$ indexes the $D_k$ query/key features and $d$ indexes the $D_v$ value features. The three projections all sum over the input feature $f$.
 
 $$
 \begin{aligned}
-q_t{}^d&=W_Q{}^d{}_k x_t{}^k,\\
-\kappa_{sd}&=(W_K)_{dk}x_s{}^k,\\
-v_s{}^d&=W_V{}^d{}_k x_s{}^k.
+Q_{ik}&=(W_Q)_{kf}x_{if},\\
+K_{jk}&=(W_K)_{kf}x_{jf},\\
+V_{jd}&=(W_V)_{df}x_{jf}.
 \end{aligned}
 $$
 
-For each pair $(t,s)$, the score contracts over $d$. If query and key coordinates are independent with zero mean and unit variance, the unscaled dot product has variance $D_{\rm head}$. Dividing by $\sqrt{D_{\rm head}}$ makes its variance independent of the width. The softmax denominator explicitly sums over key positions $s'$, leaving $t,s$ free. The weighted value sum then contracts the upper $s$ of $\alpha_t{}^s$ with the lower $s$ of $v_s{}^d$.
+For each pair $(i,j)$, the score $S_{ij}$ sums over $k$. If query and key coordinates are independent with zero mean and unit variance, the unscaled dot product has variance $D_k$. Dividing by $\sqrt{D_k}$ makes its variance independent of the width. For the softmax denominator $\ell_i$, use $m$ to sum over all key positions while keeping the query $i$ fixed.
 
 $$
 \begin{aligned}
-a_{ts}&=\frac{q_t{}^d\kappa_{sd}}{\sqrt{D_{\rm head}}},\\
-\alpha_t{}^s&=\frac{\exp(a_{ts})}{\sum_{s'}\exp(a_{ts'})},\\
-z_t{}^d&=\alpha_t{}^s v_s{}^d.
+S_{ij}&=\frac{Q_{ik}K_{jk}}{\sqrt{D_k}},\\
+\ell_i&=\sum_m \exp(S_{im}),\qquad
+P_{ij}=\frac{\exp(S_{ij})}{\ell_i},\\
+O_{id}&=P_{ij}V_{jd}.
 \end{aligned}
 $$
 
-Restore the head label $h$ to combine the results. The output projection contracts both $h$ and $d$, giving $y_t{}^n=W_O{}^n{}_{hd} z_t{}^{hd}$, where $n$ indexes output features. **Projection-weight sparsity** removes entries in the projection matrices. **Head pruning** removes entire $h$ blocks. **Attention-map sparsity** restricts which query–key pairs contribute to the softmax and value sum.
+The repeated subscripts show the reduction axes directly. The query–key dot product sums over $k$, while the weighted value sum reduces over key positions $j$, leaving query $i$ and output feature $d$.
 
-In standard multi-head attention, each head's softmax depends only on that head's queries and keys. For a retained set $S$, the head sum becomes $\widetilde y_t{}^n=\sum_{h\in S}\sum_d (W_O)_{nhd}z_t{}^{hd}$. The smaller matrices compute the same result by keeping the matching **output rows** in Q, K, V and **input columns** in $W_O$. In the flattened layout, coordinate $(h,d)$ has index $hD_{\rm head}+d$. With four heads of width eight, keeping heads $0,2,3$ keeps slices $[0,8)$, $[16,24)$, and $[24,32)$. The concatenated width becomes 24, while the output projection still produces the original model width. For grouped-query and multi-query attention, retain a shared key/value head wherever a retained query head still uses it.
+Restore the head label $h$ to combine the results. The output projection contracts both $h$ and $d$, giving $y_{in}=(W_O)_{nhd}O_{ihd}$, where $n$ indexes output features. **Projection-weight sparsity** removes entries in the projection matrices. **Head pruning** removes entire $h$ blocks. **Attention-map sparsity** restricts which query–key pairs contribute to the softmax and value sum.
+
+In standard multi-head attention, each head's softmax depends only on that head's queries and keys. For a retained set $S$, the output becomes $\widetilde y_{in}=\sum_{h\in S}\sum_d (W_O)_{nhd}O_{ihd}$. The smaller matrices compute the same result by keeping the matching **output rows** in Q, K, V and **input columns** in $W_O$. In the example below, $D_k=D_v=D_{\rm head}$, so coordinate $(h,d)$ has flattened index $hD_{\rm head}+d$. With four heads of width eight, retaining heads $0,2,3$ keeps slices $[0,8)$, $[16,24)$, and $[24,32)$. The concatenated width becomes 24, while the output projection still produces the original model width. For grouped-query and multi-query attention, retain a shared key/value head wherever a retained query head still uses it.
 
 ![Correct attention head slicing](figures/06_attention_head_pruning.svg)
 
@@ -606,18 +607,18 @@ assert small(torch.randn(2, 5, 32)).shape == (2, 5, 32)
 print(old.q.weight.shape, small.q.weight.shape)  # [32,32] -> [24,32]
 ```
 
-**Convolution.** For one image, let $(u,v)$ index output pixels, $c,o$ index input and output channels, and $(r,s)$ index kernel offsets. In a stride-one convolution with zero bias, the input patch at $(u,v)$ has entries $P_{uv}{}^{crs}=x_{u+r,v+s}{}^c$, with padding already reflected in $x$. The output contracts the patch with filter $o$ over the input channel and both kernel offsets:
+**Convolution.** For one image, let $(u,v)$ index output pixels, $c,o$ index input and output channels, and $(r,s)$ index kernel offsets. In a stride-one convolution with zero bias, the input patch at $(u,v)$ has entries $P_{uvcrs}=x_{c,u+r,v+s}$, with padding already reflected in $x$. The output contracts the patch with filter $o$ over the input channel and both kernel offsets:
 
 $$
-\boxed{y_{uv}{}^o=K^o{}_{crs}P_{uv}{}^{crs}}
-=\sum_{c,r,s}K_{ocrs}x_{u+r,v+s}{}^c.
+\boxed{y_{ouv}=K_{ocrs}P_{uvcrs}}
+=\sum_{c,r,s}K_{ocrs}x_{c,u+r,v+s}.
 $$
 
 Individual entries $K_{ocrs}$ can be pruned. In structured **filter pruning**, deleting filter $o$ removes all weights $K_{o:::}$ and the corresponding bias entry if present. Let $a$ be the first layer's output after its channel-wise activation and let $S$ be the retained channels. The first layer's output index $o$ becomes the second layer's input index. Zeroing the discarded channels in $a$ restricts the next contraction to
 
 $$
-\widetilde z_{uv}{}^q
-=\sum_{o\in S}\sum_{r,s} K^{(2)}_{qors}a_{u+r,v+s}{}^o,
+\widetilde z_{quv}
+=\sum_{o\in S}\sum_{r,s}(K_{\rm next})_{qors}a_{o,u+r,v+s},
 $$
 
 where $q$ is a second-layer output channel. A physically smaller pair of layers computes this same sum by slicing the first kernel's output axis and the second kernel's input axis in the same order. The second kernel keeps all its output filters, so its output channel count stays the same. With BatchNorm, slice the matching per-channel parameters and statistics. Residual additions require both inputs to agree on retained channels, while concatenation and grouped or depthwise convolution require updating the channel indices or group structure.
