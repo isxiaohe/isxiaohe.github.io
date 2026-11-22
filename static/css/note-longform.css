@@ -347,8 +347,7 @@
 }
 
 
-/* Plain code emitted by layouts/_default/_markup/render-codeblock.html.
-   A single code text node prevents token-level Safari text autosizing. */
+/* Keep code at a uniform size on mobile Safari. */
 .note-content pre.lecture-code {
     display: block;
     box-sizing: border-box;
@@ -398,6 +397,10 @@
     word-break: normal;
     -webkit-text-size-adjust: none;
     text-size-adjust: none;
+}
+
+.note-content pre.lecture-code code span {
+    font: inherit !important;
 }
 
 @media (max-width: 680px) {
